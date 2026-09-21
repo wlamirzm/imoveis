@@ -158,7 +158,7 @@ export default function App() {
   const filteredProperties = useMemo(() => {
     return allPropertiesCombined.filter(prop => {
       
-      // Se a Busca por Raio estiver ativa, filtrar TODOS os imóveis pela distância geográfica ao centro
+      // Se a Busca por Raio estiver ativa, a distância geográfica ao centro define o perímetro
       if (activeRadiusSearch) {
         const distMeters = calculateHaversineDistanceMeters(
           activeRadiusSearch.centerLat,
@@ -170,11 +170,11 @@ export default function App() {
         if (distMeters > activeRadiusSearch.radiusMeters) {
           return false;
         }
-      }
-
-      // Filtro por Bairro Dropdown do Header
-      if (!selectedBairro.includes('Todos os Bairros') && prop.bairro !== selectedBairro) {
-        return false;
+      } else {
+        // Filtro por Bairro Dropdown do Header (somente aplicado quando NÃO houver busca espacial ativa)
+        if (!selectedBairro.includes('Todos os Bairros') && prop.bairro !== selectedBairro) {
+          return false;
+        }
       }
 
       // Filtro por Busca Textual

@@ -3,13 +3,29 @@
 /**
  * Geocodifica um endereço em texto para coordenadas (latitude, longitude) usando OpenStreetMap Nominatim
  */
+const ZONA_SUL_KNOWN_LOCATIONS = [
+  { keywords: ['padre antônio', 'berrini', 'brooklin'], lat: -23.6080, lng: -46.6940, displayName: 'Brooklin, São Paulo - SP' },
+  { keywords: ['moema', 'maracatins', 'jauaperi', 'ibira'], lat: -23.6035, lng: -46.6612, displayName: 'Moema, São Paulo - SP' },
+  { keywords: ['morumbi', 'oscar americano', 'panamby'], lat: -23.6120, lng: -46.7210, displayName: 'Morumbi, São Paulo - SP' },
+  { keywords: ['campo belo', 'pascal', 'vieira de morais'], lat: -23.6180, lng: -46.6710, displayName: 'Campo Belo, São Paulo - SP' },
+  { keywords: ['vergueiro', 'vila mariana', 'domingos de morais', 'ana rosa'], lat: -23.5890, lng: -46.6380, displayName: 'Vila Mariana, São Paulo - SP' },
+  { keywords: ['itaim', 'clodomiro', 'joaquim floriano', 'pedroso alvarenga'], lat: -23.5850, lng: -46.6750, displayName: 'Itaim Bibi, São Paulo - SP' },
+  { keywords: ['adolfo pinheiro', 'santo amaro', 'chácara santo antônio', 'alexandre dumas'], lat: -23.6260, lng: -46.7020, displayName: 'Santo Amaro, São Paulo - SP' },
+  { keywords: ['vila nova conceição', 'cidade de milão'], lat: -23.5930, lng: -46.6670, displayName: 'Vila Nova Conceição, São Paulo - SP' }
+];
+
+/**
+ * Geocodifica um endereço em texto para coordenadas (latitude, longitude) usando OpenStreetMap Nominatim + Dicionário Local
+ */
 export async function geocodeAddress(addressText) {
+  const queryLower = addressText.toLowerCase();
+
   try {
     const fullQuery = `${addressText}, São Paulo, SP, Brasil`;
     const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullQuery)}&format=json&limit=1`);
     const data = await response.json();
 
-    if (data && data.length > 0) {
+    if (data && data.length > 0 && data[0].lat && data[0].lon) {
       return {
         lat: parseFloat(data[0].lat),
         lng: parseFloat(data[0].lon),
@@ -17,14 +33,27 @@ export async function geocodeAddress(addressText) {
       };
     }
   } catch (err) {
-    console.warn("Erro ao geocodificar endereço:", err);
+    console.warn("Aviso ao geocodificar via Nominatim, usando base local:", err);
   }
 
-  // Fallback para o centro do Brooklin / Berrini
+  // Dicionário de Coordenadas da Zona Sul de SP
+  const matched = ZONA_SUL_KNOWN_LOCATIONS.find(loc => 
+    loc.keywords.some(kw => queryLower.includes(kw))
+  );
+
+  if (matched) {
+    return {
+      lat: matched.lat,
+      lng: matched.lng,
+      displayName: matched.displayName
+    };
+  }
+
+  // Fallback padrão para o centro do Brooklin / Berrini
   return {
     lat: -23.6080,
     lng: -46.6940,
-    displayName: "Brooklin, São Paulo - SP"
+    displayName: `${addressText}, Zona Sul, São Paulo - SP`
   };
 }
 
