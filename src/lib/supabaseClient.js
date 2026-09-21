@@ -1,13 +1,65 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Variáveis de ambiente configuráveis via Vercel ou .env.local
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-project.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key-placeholder';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://voojzuykqkaiedqpbzbg.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvb2p6dXlrcWthaWVkcXBiemJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMjY0MTMsImV4cCI6MjEwNTYwMjQxM30.gL_kZUTbkDnz-eRSkmUPuqKL23lk9rXgcCEYHYJSkC8';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /**
- * Função para salvar um novo imóvel raspado no banco PostgreSQL + PostGIS do Supabase
+ * Função para buscar imóveis direto do Supabase PostgreSQL + PostGIS
+ */
+export async function fetchPropertiesFromSupabase() {
+  try {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn("Erro ao buscar no Supabase:", error.message);
+      return null;
+    }
+
+    return data.map(item => ({
+      id: item.id,
+      code: item.code,
+      title: item.title,
+      bairro: item.bairro,
+      cidade: item.cidade,
+      estado: item.estado,
+      zona: item.zona,
+      endereco: item.endereco,
+      tipo: item.tipo,
+      preco: Number(item.preco),
+      area: Number(item.area),
+      precoM2: Number(item.preco_m2),
+      quartos: item.quartos,
+      suites: item.suites,
+      vagas: item.vagas,
+      banheiros: item.banheiros,
+      condominio: Number(item.condominio),
+      iptu: Number(item.iptu),
+      status: item.status,
+      portal: item.portal,
+      remaxExclusivo: item.remax_exclusivo,
+      diasNoMercado: item.dias_no_mercado,
+      dataAnuncio: item.data_anuncio,
+      dataVenda: item.data_venda,
+      lat: Number(item.latitude),
+      lng: Number(item.longitude),
+      imagem: item.image_url,
+      corretor: item.corretor,
+      contato: item.contato
+    }));
+  } catch (err) {
+    console.warn("Falha na consulta Supabase:", err);
+    return null;
+  }
+}
+
+/**
+ * Função para salvar/atualizar um novo imóvel raspado no banco PostgreSQL + PostGIS do Supabase
  */
 export async function savePropertyToSupabase(property) {
   try {
@@ -43,12 +95,12 @@ export async function savePropertyToSupabase(property) {
       }, { onConflict: 'code' });
 
     if (error) {
-      console.warn("Aviso Supabase (Modo local sem chaves ativas ainda):", error.message);
+      console.warn("Aviso ao gravar no Supabase:", error.message);
       return null;
     }
     return data;
   } catch (err) {
-    console.warn("Supabase local fallback ativado.");
+    console.warn("Supabase insert fallback:", err);
     return null;
   }
 }
