@@ -22,15 +22,15 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
 
   // Imóvel sob avaliação (Subject Property)
   const [subject, setSubject] = useState(initialSubjectProperty || {
-    title: "Apartamento Modelo para Avaliação",
-    bairro: "Moema",
-    endereco: "Av. Agami, 320",
-    area: 110,
+    title: "Apartamento Modelo Brooklin / Morumbi",
+    bairro: "Brooklin",
+    endereco: "Rua Padre Antônio José dos Santos, 500",
+    area: 125,
     quartos: 3,
     suites: 2,
     vagas: 2,
-    precoAlvo: 1650000,
-    corretor: "Corretor RE/MAX Especialista"
+    precoAlvo: 1850000,
+    corretor: "Corretor RE/MAX Especialista ZS"
   });
 
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -49,7 +49,7 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
   const allComparables = [...comparablesActive, ...comparablesSold];
   const avgCompM2 = allComparables.length > 0
     ? Math.round(allComparables.reduce((sum, p) => sum + p.precoM2, 0) / allComparables.length)
-    : 14800;
+    : 14500;
 
   const precoSugeridoRemax = subject.area * avgCompM2;
   const precoMinimoVenda = Math.round(precoSugeridoRemax * 0.93);
@@ -68,7 +68,6 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgWidth = 210;
-      const pageHeight = 295;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
@@ -88,13 +87,13 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
       <div className="bg-[#131F2E] border border-slate-800 rounded-xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-white">Análise Comparativa de Mercado (ACM / CMA)</h2>
+            <h2 className="text-lg font-bold text-white">Análise Comparativa de Mercado (ACM / CMA) - Zona Sul SP</h2>
             <span className="bg-remax-red/20 text-remax-red border border-remax-red/40 text-xs px-2.5 py-0.5 rounded-full font-bold">
               Padrão RE/MAX Brasil
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Ferramenta para definição precisa de valor de captação baseada em estatísticas reais de imóveis concorrentes e vendidos.
+            Ferramenta para definição precisa de valor de captação baseada em estatísticas reais de imóveis concorrentes e vendidos (Morumbi, Brooklin, Moema...).
           </p>
         </div>
 
@@ -129,18 +128,21 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Bairro</label>
+              <label className="text-xs text-slate-400 block mb-1">Bairro (Zona Sul)</label>
               <select
                 value={subject.bairro}
                 onChange={(e) => setSubject({ ...subject, bairro: e.target.value })}
                 className="w-full bg-[#0B131F] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-remax-accent"
               >
+                <option value="Brooklin">Brooklin</option>
+                <option value="Morumbi">Morumbi</option>
                 <option value="Moema">Moema</option>
-                <option value="Itaim Bibi">Itaim Bibi</option>
-                <option value="Pinheiros">Pinheiros</option>
-                <option value="Jardins">Jardins</option>
-                <option value="Vila Nova Conceição">Vila Nova Conceição</option>
                 <option value="Campo Belo">Campo Belo</option>
+                <option value="Vila Mariana">Vila Mariana</option>
+                <option value="Itaim Bibi">Itaim Bibi</option>
+                <option value="Chácara Santo Antônio">Chácara Santo Antônio</option>
+                <option value="Santo Amaro">Santo Amaro</option>
+                <option value="Vila Nova Conceição">Vila Nova Conceição</option>
               </select>
             </div>
 
@@ -214,7 +216,7 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
             {subject.precoAlvo > precoTetoAnuncio && (
               <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-2 rounded text-[11px] flex items-start gap-1.5 mt-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>O valor desejado pelo proprietário está <strong>{Math.round(((subject.precoAlvo / precoSugeridoRemax) - 1) * 100)}% acima</strong> da média recomendada para captação exclusiva!</span>
+                <span>O valor desejado pelo proprietário está <strong>{Math.round(((subject.precoAlvo / precoSugeridoRemax) - 1) * 100)}% acima</strong> da média recomendada para captação exclusiva no {subject.bairro}!</span>
               </div>
             )}
           </div>
@@ -235,13 +237,13 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
                     LAUDO DE ANÁLISE COMPARATIVA DE MERCADO (ACM)
                   </h1>
                   <p className="text-xs text-remax-red font-bold">
-                    RE/MAX Brasil • Relatório de Avaliação Imobiliária
+                    RE/MAX Brasil • Relatório de Avaliação Imobiliária (Zona Sul SP)
                   </p>
                 </div>
               </div>
               <div className="text-right text-xs text-slate-400 font-mono">
                 <p>Data: {new Date().toLocaleDateString('pt-BR')}</p>
-                <p>Região: {subject.bairro} - SP</p>
+                <p>Região: {subject.bairro} - Zona Sul SP</p>
               </div>
             </div>
 
@@ -249,7 +251,7 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
             <div className="bg-[#131F2E] border border-slate-800 rounded-xl p-6 shadow-inner">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-remax-gold" />
-                Recomendação de Precificação para Captação Exclusiva
+                Recomendação de Precificação para Captação Exclusiva ({subject.bairro})
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
@@ -295,7 +297,7 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
             <div>
               <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                Imóveis Concorrentes no Mercado ({comparablesActive.length} Imóveis Ativos)
+                Imóveis Concorrentes no Mercado ({comparablesActive.length} Imóveis Ativos no {subject.bairro})
               </h3>
 
               <div className="space-y-2">
@@ -318,7 +320,7 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
             <div>
               <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                Imóveis Vendidos na Região (Transacionados)
+                Imóveis Vendidos no {subject.bairro} (Transacionados)
               </h3>
 
               <div className="space-y-2">
@@ -341,7 +343,7 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
             <div className="border-t border-slate-800 pt-4 flex items-center justify-between text-[11px] text-slate-400">
               <div>
                 <span>Laudo emitido por: <strong>{subject.corretor}</strong></span>
-                <span className="block">RE/MAX Brasil • Todos os direitos reservados</span>
+                <span className="block">RE/MAX Brasil • Zona Sul São Paulo</span>
               </div>
               <div className="text-right">
                 <span className="font-bold text-slate-300">RE/MAX Market Intelligence System</span>

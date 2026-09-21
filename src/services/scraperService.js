@@ -1,36 +1,38 @@
-// Motor de Simulação de Ingestão & Scraping Automatizado de Portais Imobiliários
+// Motor de Simulação de Ingestão & Scraping Automatizado de Portais Imobiliários - Focado na ZONA SUL de São Paulo
 
 const PORTALS = ["ZAP Imóveis", "VivaReal", "OLX", "Imovelweb", "RE/MAX Portal"];
 const NEIGHBORHOOD_COORDS = {
-  "Moema": { lat: -23.6035, lng: -46.6612, baseM2: 15200 },
+  "Brooklin": { lat: -23.6105, lng: -46.6880, baseM2: 14500 },
+  "Morumbi": { lat: -23.6120, lng: -46.7210, baseM2: 8900 },
+  "Moema": { lat: -23.6035, lng: -46.6612, baseM2: 15300 },
+  "Campo Belo": { lat: -23.6180, lng: -46.6710, baseM2: 12800 },
+  "Vila Mariana": { lat: -23.5890, lng: -46.6380, baseM2: 13500 },
   "Itaim Bibi": { lat: -23.5850, lng: -46.6750, baseM2: 19800 },
-  "Pinheiros": { lat: -23.5650, lng: -46.6880, baseM2: 13900 },
-  "Jardins": { lat: -23.5700, lng: -46.6700, baseM2: 16500 },
-  "Vila Nova Conceição": { lat: -23.5930, lng: -46.6670, baseM2: 22400 },
-  "Campo Belo": { lat: -23.6180, lng: -46.6710, baseM2: 12500 },
-  "Perdizes": { lat: -23.5350, lng: -46.6720, baseM2: 11800 }
+  "Chácara Santo Antônio": { lat: -23.6260, lng: -46.7020, baseM2: 11900 },
+  "Santo Amaro": { lat: -23.6500, lng: -46.7070, baseM2: 9800 },
+  "Vila Nova Conceição": { lat: -23.5930, lng: -46.6670, baseM2: 23200 }
 };
 
 const PROPERTY_TYPES = ["Apartamento", "Cobertura", "Casa", "Studio"];
 
 /**
- * Gera um novo imóvel coletado via scraping para o bairro selecionado
+ * Gera um novo imóvel coletado via scraping para o bairro selecionado da Zona Sul
  */
-export function generateScrapedProperty(bairroTarget = "Moema", forceStatus = null) {
-  const coords = NEIGHBORHOOD_COORDS[bairroTarget] || NEIGHBORHOOD_COORDS["Moema"];
+export function generateScrapedProperty(bairroTarget = "Brooklin", forceStatus = null) {
+  const coords = NEIGHBORHOOD_COORDS[bairroTarget] || NEIGHBORHOOD_COORDS["Brooklin"];
   
   // Variação leve nas coordenadas (raio de ~1km)
   const latOffset = (Math.random() - 0.5) * 0.015;
   const lngOffset = (Math.random() - 0.5) * 0.015;
   
-  const area = Math.floor(Math.random() * (220 - 45) + 45);
+  const area = Math.floor(Math.random() * (240 - 50) + 50);
   // Preço por m² com variação estatística de ±12%
   const m2Variation = 1 + (Math.random() - 0.5) * 0.24;
   const precoM2 = Math.round(coords.baseM2 * m2Variation);
   const preco = Math.round((area * precoM2) / 10000) * 10000;
   
   const tipo = PROPERTY_TYPES[Math.floor(Math.random() * PROPERTY_TYPES.length)];
-  const quartos = area > 140 ? 4 : area > 85 ? 3 : area > 55 ? 2 : 1;
+  const quartos = area > 150 ? 4 : area > 85 ? 3 : area > 55 ? 2 : 1;
   const suites = Math.min(quartos, Math.floor(Math.random() * quartos) + 1);
   const vagas = area > 150 ? 3 : area > 80 ? 2 : 1;
   
@@ -51,11 +53,12 @@ export function generateScrapedProperty(bairroTarget = "Moema", forceStatus = nu
   return {
     id: `SCRAP-${idNum}`,
     code: `${portal.substring(0,3).toUpperCase()}-${idNum}`,
-    title: `${tipo} ${area}m² - ${quartos} dorms (${bairroTarget})`,
+    title: `${tipo} ${area}m² - ${quartos} dorms (${bairroTarget} - Zona Sul)`,
     bairro: bairroTarget,
     cidade: "São Paulo",
     estado: "SP",
-    endereco: `Rua Coletada Automática, ${Math.floor(Math.random() * 900) + 10}`,
+    zona: "Zona Sul",
+    endereco: `Rua Coletada Automática ZS, ${Math.floor(Math.random() * 900) + 10}`,
     tipo: tipo,
     preco: preco,
     area: area,
@@ -75,22 +78,22 @@ export function generateScrapedProperty(bairroTarget = "Moema", forceStatus = nu
     lat: coords.lat + latOffset,
     lng: coords.lng + lngOffset,
     imagem: images[Math.floor(Math.random() * images.length)],
-    corretor: isRemax ? "Corretor RE/MAX Integrado" : "Captação Automática Portal",
+    corretor: isRemax ? "Corretor RE/MAX Zona Sul" : "Captação Automática Portal",
     contato: "(11) 98000-1122"
   };
 }
 
 /**
- * Executa uma rodada simulada de scraping com logs em tempo real
+ * Executa uma rodada simulada de scraping para a Zona Sul com logs em tempo real
  */
 export async function runScraperJob(bairro, onLogProgress) {
   const steps = [
-    { msg: `🌐 Conectando aos portais (ZAP, VivaReal, OLX, RE/MAX) para o bairro ${bairro}...`, delay: 600 },
-    { msg: `🔍 Varrendo 14 páginas de anúncios e extraindo metadados de preço e m²...`, delay: 900 },
-    { msg: `⚡ Executando algoritmo de geocodificação e coordenadas de geolocalização...`, delay: 700 },
-    { msg: `🧹 Higienizando e aplicando regras de deduplicação (Removendo duplicatas idênticas)...`, delay: 800 },
-    { msg: `📊 Recalculando preço médio por m² e métricas de absorção para ${bairro}...`, delay: 500 },
-    { msg: `✅ Ingestão finalizada com sucesso! Novos anúncios armazenados no banco de dados.`, delay: 400 }
+    { msg: `🌐 Conectando aos portais (ZAP, VivaReal, OLX, RE/MAX) na Zona Sul (${bairro})...`, delay: 600 },
+    { msg: `🔍 Varrendo anúncios e extraindo métricas de valor por m² para ${bairro}...`, delay: 900 },
+    { msg: `⚡ Geocodificando coordenadas de latitude e longitude dos imóveis...`, delay: 700 },
+    { msg: `🧹 Higienizando e aplicando deduplicação de ofertas na Zona Sul...`, delay: 800 },
+    { msg: `📊 Recalculando valor médio por m² e liquidez para o bairro ${bairro}...`, delay: 500 },
+    { msg: `✅ Ingestão da Zona Sul finalizada com sucesso!`, delay: 400 }
   ];
 
   for (const step of steps) {
@@ -98,7 +101,7 @@ export async function runScraperJob(bairro, onLogProgress) {
     await new Promise(resolve => setTimeout(resolve, step.delay));
   }
 
-  // Retorna 3 novos imóveis raspados
+  // Retorna 3 novos imóveis raspados da Zona Sul
   return [
     generateScrapedProperty(bairro, "venda"),
     generateScrapedProperty(bairro, "venda"),

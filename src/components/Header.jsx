@@ -20,15 +20,17 @@ export default function Header({
   totalProperties,
   avgM2Price
 }) {
-  const bairrosDisponiveis = [
-    "Todos os Bairros",
+  const bairrosZonaSul = [
+    "Todos os Bairros (Zona Sul)",
+    "Morumbi",
+    "Brooklin",
     "Moema",
-    "Itaim Bibi",
-    "Pinheiros",
-    "Jardins",
-    "Vila Nova Conceição",
     "Campo Belo",
-    "Perdizes"
+    "Vila Mariana",
+    "Itaim Bibi",
+    "Chácara Santo Antônio",
+    "Santo Amaro",
+    "Vila Nova Conceição"
   ];
 
   return (
@@ -45,21 +47,21 @@ export default function Header({
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-white tracking-tight">
-                  RE/MAX <span className="text-remax-red">Market</span> Intelligence
+                  RE/MAX <span className="text-remax-red">Market</span> Intelligence <span className="text-xs text-slate-400 font-normal">(Zona Sul SP)</span>
                 </h1>
                 <span className="bg-remax-red/10 border border-remax-red/30 text-remax-red text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Sparkles className="w-3 h-3" /> ACM Pro
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Mapeamento Espacial, Coleta Automatizada & Análise Comparativa de Mercado
+                Mapeamento Espacial, Coleta Automatizada & Análise Comparativa de Mercado (Morumbi, Brooklin, Moema...)
               </p>
             </div>
           </div>
 
           {/* Quick Metrics & Actions */}
           <div className="flex flex-wrap items-center gap-3">
-            {/* Quick Bairro Filter */}
+            {/* Quick Bairro Filter Zona Sul */}
             <div className="relative">
               <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <select
@@ -67,7 +69,7 @@ export default function Header({
                 onChange={(e) => setSelectedBairro(e.target.value)}
                 className="bg-[#131F2E] border border-slate-700/80 rounded-lg text-sm text-slate-200 pl-9 pr-8 py-2 focus:outline-none focus:border-remax-accent focus:ring-1 focus:ring-remax-accent cursor-pointer transition-all"
               >
-                {bairrosDisponiveis.map((b) => (
+                {bairrosZonaSul.map((b) => (
                   <option key={b} value={b}>{b}</option>
                 ))}
               </select>
@@ -84,13 +86,13 @@ export default function Header({
               }`}
             >
               <RefreshCw className={`w-4 h-4 ${isScraping ? 'animate-spin' : ''}`} />
-              <span>{isScraping ? 'Coletando Dados...' : 'Coletar Portais'}</span>
+              <span>{isScraping ? 'Coletando Dados...' : 'Coletar Zona Sul'}</span>
             </button>
 
             {/* Quick Stat Pill */}
             <div className="hidden lg:flex items-center gap-3 bg-[#131F2E] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300">
               <div>
-                <span className="text-slate-400 block">Imóveis:</span>
+                <span className="text-slate-400 block">Imóveis ZS:</span>
                 <span className="font-bold text-white text-sm">{totalProperties}</span>
               </div>
               <div className="h-6 w-px bg-slate-800" />
@@ -115,7 +117,7 @@ export default function Header({
             }`}
           >
             <MapPin className="w-4 h-4 text-remax-red" />
-            <span>Mapa Espacial de Imóveis</span>
+            <span>Mapa Espacial (Zona Sul)</span>
           </button>
 
           <button
@@ -127,7 +129,7 @@ export default function Header({
             }`}
           >
             <BarChart3 className="w-4 h-4 text-remax-accent" />
-            <span>Inteligência de Mercado & Preços</span>
+            <span>Inteligência & Preços ZS</span>
           </button>
 
           <button
