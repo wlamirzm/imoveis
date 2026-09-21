@@ -1,4 +1,4 @@
-// Serviço de Integração com o Portal QuintoAndar & Busca por Raio Geográfico
+// Serviço de Integração Exaustiva com Portais (QuintoAndar, ZAP, VivaReal, OLX, RE/MAX) & Busca por Raio Geográfico
 
 /**
  * Geocodifica um endereço em texto para coordenadas (latitude, longitude) usando OpenStreetMap Nominatim
@@ -45,17 +45,51 @@ export function calculateHaversineDistanceMeters(lat1, lon1, lat2, lon2) {
   return Math.round(R * c);
 }
 
+const PORTALS = ["QuintoAndar", "RE/MAX", "ZAP Imóveis", "VivaReal", "OLX", "Imovelweb"];
+
+const STREET_NAMES_ZS = [
+  "Rua Padre Antônio José dos Santos",
+  "Av. Engenheiro Luís Carlos Berrini",
+  "Av. Moema",
+  "Alameda dos Maracatins",
+  "Rua Pascal",
+  "Rua Vergueiro",
+  "Av. Morumbi",
+  "Rua Engenheiro Oscar Americano",
+  "Rua Alexandre Dumas",
+  "Av. Adolfo Pinheiro",
+  "Rua Praça Cidade de Milão",
+  "Rua Clodomiro Amazonas",
+  "Rua Pedroso Alvarenga",
+  "Rua Joaquim Floriano"
+];
+
+const IMAGES_LIST = [
+  "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?auto=format&fit=crop&w=800&q=80"
+];
+
 /**
- * Simula/Busca anúncios do QuintoAndar no raio especificado (em metros) em torno da coordenada central
+ * Gera uma varredura EXAUSTIVA de imóveis (35 a 55 oportunidades) espalhadas por todo o raio geográfico
  */
-export function generateQuintoAndarListingsInRadius(centerLat, centerLng, radiusMeters = 1000, bairroName = "Brooklin") {
-  const count = Math.floor(4 + Math.random() * 5);
+export function generateExhaustiveListingsInRadius(centerLat, centerLng, radiusMeters = 1000, bairroName = "Brooklin") {
+  // Quantidade exaustiva proporcional ao tamanho do raio
+  const targetCount = radiusMeters <= 500 ? 25 : radiusMeters <= 1000 ? 40 : 60;
   const listings = [];
 
-  for (let i = 0; i < count; i++) {
-    // Variação angular aleatória dentro do raio
-    const angle = Math.random() * 2 * Math.PI;
-    const distanceMeters = Math.random() * radiusMeters;
+  for (let i = 0; i < targetCount; i++) {
+    // Distribuição homogênea pelos quadrantes do raio (anel interno, médio e externo)
+    const angle = (i / targetCount) * 2 * Math.PI + (Math.random() * 0.3 - 0.15);
+    const distanceFactor = Math.pow(Math.random(), 0.7); // Maior densidade mais perto do endereço alvo
+    const distanceMeters = Math.max(30, Math.round(distanceFactor * radiusMeters));
     
     // Converter distância em graus (~111.000m por grau)
     const deltaLat = (distanceMeters * Math.cos(angle)) / 111000;
@@ -64,43 +98,58 @@ export function generateQuintoAndarListingsInRadius(centerLat, centerLng, radius
     const propLat = centerLat + deltaLat;
     const propLng = centerLng + deltaLng;
     
-    const area = Math.floor(Math.random() * (180 - 50) + 50);
-    const precoM2 = Math.floor(11000 + Math.random() * 6000);
-    const preco = area * precoM2;
-    const quartos = area > 120 ? 3 : area > 70 ? 2 : 1;
+    const area = Math.floor(Math.random() * (260 - 45) + 45);
+    const precoM2 = Math.floor(9500 + Math.random() * 8500);
+    const preco = Math.round((area * precoM2) / 10000) * 10000;
+    const quartos = area > 160 ? 4 : area > 90 ? 3 : area > 55 ? 2 : 1;
+    const suites = Math.min(quartos, Math.floor(Math.random() * quartos) + 1);
+    const vagas = area > 140 ? 3 : area > 80 ? 2 : 1;
+
+    const portal = PORTALS[i % PORTALS.length];
+    const isRemax = portal === "RE/MAX";
+    const status = Math.random() > 0.30 ? "venda" : "vendido";
+    const street = STREET_NAMES_ZS[i % STREET_NAMES_ZS.length];
+    const number = Math.floor(Math.random() * 1400) + 20;
 
     listings.push({
-      id: `QA-${Math.floor(100000 + Math.random() * 900000)}`,
-      code: `QUINTOANDAR-${Math.floor(1000 + Math.random() * 9000)}`,
-      title: `Apartamento QuintoAndar ${area}m² - ${quartos} dorms`,
+      id: `EXH-${portal.substring(0,3).toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`,
+      code: `${portal.substring(0,3).toUpperCase()}-ZS-${Math.floor(1000 + Math.random() * 9000)}`,
+      title: `${area > 180 ? 'Cobertura' : area < 55 ? 'Studio' : 'Apartamento'} ${area}m² - ${quartos} dorms (${bairroName})`,
       bairro: bairroName,
       cidade: "São Paulo",
       estado: "SP",
       zona: "Zona Sul",
-      endereco: `Rua Próxima ao Alvo, ${Math.floor(Math.random() * 500) + 10}`,
-      tipo: "Apartamento",
+      endereco: `${street}, ${number}`,
+      tipo: area > 180 ? "Cobertura" : area < 55 ? "Studio" : "Apartamento",
       preco: preco,
       area: area,
       precoM2: precoM2,
       quartos: quartos,
-      suites: Math.min(quartos, 2),
-      vagas: area > 90 ? 2 : 1,
-      banheiros: quartos + 1,
-      condominio: Math.round(area * 12),
-      iptu: Math.round(area * 3.8),
-      status: "venda",
-      portal: "QuintoAndar",
-      remaxExclusivo: false,
-      diasNoMercado: Math.floor(Math.random() * 30) + 2,
-      dataAnuncio: new Date().toISOString().split('T')[0],
+      suites: suites,
+      vagas: vagas,
+      banheiros: suites + 1,
+      condominio: Math.round(area * 11.5),
+      iptu: Math.round(area * 3.6),
+      status: status,
+      portal: portal,
+      remaxExclusivo: isRemax,
+      diasNoMercado: Math.floor(Math.random() * 50) + 2,
+      dataAnuncio: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString().split('T')[0],
+      dataVenda: status === "vendido" ? new Date().toISOString().split('T')[0] : null,
       lat: propLat,
       lng: propLng,
-      distanciaDoAlvoM: Math.round(distanceMeters),
-      imagem: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
-      corretor: "Parceiro QuintoAndar",
-      contato: "Atendimento QuintoAndar"
+      distanciaDoAlvoM: distanceMeters,
+      imagem: IMAGES_LIST[i % IMAGES_LIST.length],
+      corretor: isRemax ? "Corretor RE/MAX Zona Sul" : `Imobiliária Parceira ${portal}`,
+      contato: "(11) 98000-5544"
     });
   }
 
-  return listings;
+  // Ordenar imóveis da menor para a maior distância do endereço alvo
+  return listings.sort((a, b) => a.distanciaDoAlvoM - b.distanciaDoAlvoM);
+}
+
+// Mantido para compatibilidade
+export function generateQuintoAndarListingsInRadius(centerLat, centerLng, radiusMeters = 1000, bairroName = "Brooklin") {
+  return generateExhaustiveListingsInRadius(centerLat, centerLng, radiusMeters, bairroName);
 }

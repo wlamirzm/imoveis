@@ -1,7 +1,8 @@
-// Dataset de Imóveis Focado na ZONA SUL de São Paulo (Morumbi, Brooklin, Moema, Campo Belo, etc.)
+// Base Exaustiva de Imóveis para a ZONA SUL de São Paulo (Brooklin, Morumbi, Moema, Campo Belo, Vila Mariana, etc.)
 export const initialProperties = [
+  // BROOKLIN
   {
-    id: "REM-2001",
+    id: "REM-3001",
     code: "REMAX-ZS-1001",
     title: "Cobertura Duplex com Vista Panorâmica para a Ponte Estaiada",
     bairro: "Brooklin",
@@ -24,7 +25,6 @@ export const initialProperties = [
     remaxExclusivo: true,
     diasNoMercado: 14,
     dataAnuncio: "2026-09-07",
-    dataVenda: null,
     lat: -23.6105,
     lng: -46.6880,
     imagem: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80",
@@ -32,7 +32,7 @@ export const initialProperties = [
     contato: "(11) 98777-1122"
   },
   {
-    id: "REM-2002",
+    id: "REM-3002",
     code: "ZAP-44012",
     title: "Apartamento de Alto Padrão Reformado Próximo à Berrini",
     bairro: "Brooklin",
@@ -55,7 +55,6 @@ export const initialProperties = [
     remaxExclusivo: false,
     diasNoMercado: 32,
     dataAnuncio: "2026-08-20",
-    dataVenda: null,
     lat: -23.6080,
     lng: -46.6940,
     imagem: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
@@ -63,7 +62,69 @@ export const initialProperties = [
     contato: "(11) 3344-8899"
   },
   {
-    id: "REM-2003",
+    id: "REM-3003",
+    code: "QUINTO-1102",
+    title: "Apartamento Compacto Moderno Brooklin Novo",
+    bairro: "Brooklin",
+    cidade: "São Paulo",
+    estado: "SP",
+    zona: "Zona Sul",
+    endereco: "Rua Arorizal, 340",
+    tipo: "Apartamento",
+    preco: 980000,
+    area: 68,
+    precoM2: 14411,
+    quartos: 2,
+    suites: 1,
+    vagas: 1,
+    banheiros: 2,
+    condominio: 750,
+    iptu: 280,
+    status: "venda",
+    portal: "QuintoAndar",
+    remaxExclusivo: false,
+    diasNoMercado: 8,
+    dataAnuncio: "2026-09-12",
+    lat: -23.6095,
+    lng: -46.6910,
+    imagem: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
+    corretor: "Parceiro QuintoAndar",
+    contato: "(11) 98000-1122"
+  },
+  {
+    id: "REM-3004",
+    code: "OLX-88210",
+    title: "Apartamento 3 Dormitórios Lazer Completo no Brooklin Novo",
+    bairro: "Brooklin",
+    cidade: "São Paulo",
+    estado: "SP",
+    zona: "Zona Sul",
+    endereco: "Rua Flórida, 800",
+    tipo: "Apartamento",
+    preco: 1650000,
+    area: 118,
+    precoM2: 13983,
+    quartos: 3,
+    suites: 2,
+    vagas: 2,
+    banheiros: 3,
+    condominio: 1200,
+    iptu: 490,
+    status: "venda",
+    portal: "OLX",
+    remaxExclusivo: false,
+    diasNoMercado: 19,
+    dataAnuncio: "2026-09-01",
+    lat: -23.6065,
+    lng: -46.6895,
+    imagem: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
+    corretor: "Vendedor Direto",
+    contato: "(11) 97722-3344"
+  },
+
+  // MORUMBI
+  {
+    id: "REM-3005",
     code: "REMAX-ZS-2005",
     title: "Mansão em Condomínio Fechado Alto Padrão Morumbi",
     bairro: "Morumbi",
@@ -86,7 +147,6 @@ export const initialProperties = [
     remaxExclusivo: true,
     diasNoMercado: 45,
     dataAnuncio: "2026-08-07",
-    dataVenda: null,
     lat: -23.6120,
     lng: -46.7210,
     imagem: "https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=800&q=80",
@@ -94,7 +154,7 @@ export const initialProperties = [
     contato: "(11) 97111-2233"
   },
   {
-    id: "REM-2004",
+    id: "REM-3006",
     code: "VIV-33109",
     title: "Apartamento Amplo Próximo ao Palácio dos Bandeirantes",
     bairro: "Morumbi",
@@ -117,7 +177,6 @@ export const initialProperties = [
     remaxExclusivo: false,
     diasNoMercado: 28,
     dataAnuncio: "2026-07-25",
-    dataVenda: "2026-08-22",
     lat: -23.6060,
     lng: -46.7150,
     imagem: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
@@ -125,7 +184,39 @@ export const initialProperties = [
     contato: "(11) 3744-1100"
   },
   {
-    id: "REM-2005",
+    id: "REM-3007",
+    code: "QUINTO-99201",
+    title: "Apartamento Amplo 3 Suites Panamby / Morumbi",
+    bairro: "Morumbi",
+    cidade: "São Paulo",
+    estado: "SP",
+    zona: "Zona Sul",
+    endereco: "Av. Giovanni Gronchi, 3200",
+    tipo: "Apartamento",
+    preco: 1450000,
+    area: 165,
+    precoM2: 8787,
+    quartos: 3,
+    suites: 3,
+    vagas: 3,
+    banheiros: 4,
+    condominio: 1850,
+    iptu: 680,
+    status: "venda",
+    portal: "QuintoAndar",
+    remaxExclusivo: false,
+    diasNoMercado: 15,
+    dataAnuncio: "2026-09-05",
+    lat: -23.6180,
+    lng: -46.7250,
+    imagem: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80",
+    corretor: "QuintoAndar Vendas",
+    contato: "(11) 98000-4455"
+  },
+
+  // MOEMA
+  {
+    id: "REM-3008",
     code: "REMAX-ZS-3001",
     title: "Apartamento de Luxo com Varanda Gourmet em Moema Passagem",
     bairro: "Moema",
@@ -148,7 +239,6 @@ export const initialProperties = [
     remaxExclusivo: true,
     diasNoMercado: 12,
     dataAnuncio: "2026-09-09",
-    dataVenda: null,
     lat: -23.6035,
     lng: -46.6612,
     imagem: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80",
@@ -156,7 +246,39 @@ export const initialProperties = [
     contato: "(11) 98765-4321"
   },
   {
-    id: "REM-2006",
+    id: "REM-3009",
+    code: "ZAP-99120",
+    title: "Apartamento Reformado Moema Pássaros Próximo ao Ibirapuera",
+    bairro: "Moema",
+    cidade: "São Paulo",
+    estado: "SP",
+    zona: "Zona Sul",
+    endereco: "Alameda dos Maracatins, 890",
+    tipo: "Apartamento",
+    preco: 2350000,
+    area: 145,
+    precoM2: 16206,
+    quartos: 3,
+    suites: 3,
+    vagas: 2,
+    banheiros: 4,
+    condominio: 1680,
+    iptu: 640,
+    status: "venda",
+    portal: "ZAP Imóveis",
+    remaxExclusivo: false,
+    diasNoMercado: 22,
+    dataAnuncio: "2026-08-28",
+    lat: -23.6078,
+    lng: -46.6579,
+    imagem: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
+    corretor: "Prime Moema",
+    contato: "(11) 3044-2211"
+  },
+
+  // CAMPO BELO
+  {
+    id: "REM-3010",
     code: "OLX-99812",
     title: "Apartamento Familiar de 3 Dorms com Lazer Completo",
     bairro: "Campo Belo",
@@ -179,15 +301,16 @@ export const initialProperties = [
     remaxExclusivo: false,
     diasNoMercado: 21,
     dataAnuncio: "2026-08-31",
-    dataVenda: null,
     lat: -23.6180,
     lng: -46.6710,
     imagem: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
     corretor: "Particular ZS",
     contato: "(11) 99881-2233"
   },
+
+  // VILA MARIANA
   {
-    id: "REM-2007",
+    id: "REM-3011",
     code: "REMAX-ZS-4009",
     title: "Apartamento Moderno Próximo ao Metrô Ana Rosa",
     bairro: "Vila Mariana",
@@ -210,15 +333,16 @@ export const initialProperties = [
     remaxExclusivo: true,
     diasNoMercado: 18,
     dataAnuncio: "2026-09-03",
-    dataVenda: null,
     lat: -23.5890,
     lng: -46.6380,
     imagem: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80",
     corretor: "Fernanda Lima (RE/MAX Vila Mariana)",
     contato: "(11) 99887-1122"
   },
+
+  // VILA NOVA CONCEIÇÃO
   {
-    id: "REM-2008",
+    id: "REM-3012",
     code: "IMO-77102",
     title: "Apartamento Neoclássico Único por Andar",
     bairro: "Vila Nova Conceição",
@@ -241,15 +365,16 @@ export const initialProperties = [
     remaxExclusivo: false,
     diasNoMercado: 40,
     dataAnuncio: "2026-08-12",
-    dataVenda: null,
     lat: -23.5930,
     lng: -46.6670,
     imagem: "https://images.unsplash.com/photo-1512915922686-57c11dde9b6b?auto=format&fit=crop&w=800&q=80",
     corretor: "Boutique Imobiliária",
     contato: "(11) 3100-2200"
   },
+
+  // CHÁCARA SANTO ANTÔNIO
   {
-    id: "REM-2009",
+    id: "REM-3013",
     code: "REMAX-ZS-5012",
     title: "Apartamento Studio Design com Varanda",
     bairro: "Chácara Santo Antônio",
@@ -272,15 +397,16 @@ export const initialProperties = [
     remaxExclusivo: true,
     diasNoMercado: 10,
     dataAnuncio: "2026-08-15",
-    dataVenda: "2026-08-25",
     lat: -23.6260,
     lng: -46.7020,
     imagem: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
     corretor: "Gabriel Rocha (RE/MAX)",
     contato: "(11) 98877-6655"
   },
+
+  // SANTO AMARO
   {
-    id: "REM-2010",
+    id: "REM-3014",
     code: "ZAP-88912",
     title: "Apartamento Spazio Santo Amaro ao Lado do Metrô",
     bairro: "Santo Amaro",
@@ -303,7 +429,6 @@ export const initialProperties = [
     remaxExclusivo: false,
     diasNoMercado: 25,
     dataAnuncio: "2026-08-27",
-    dataVenda: null,
     lat: -23.6500,
     lng: -46.7070,
     imagem: "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?auto=format&fit=crop&w=800&q=80",
@@ -312,7 +437,6 @@ export const initialProperties = [
   }
 ];
 
-// Evolução Histórica de Preço/m² nos Bairros Principais da ZONA SUL de São Paulo
 export const historicalPriceData = [
   { mes: "Set/25", Brooklin: 13500, Morumbi: 8400, Moema: 14200, VilaMariana: 12600, CampoBelo: 11900 },
   { mes: "Out/25", Brooklin: 13650, Morumbi: 8500, Moema: 14350, VilaMariana: 12750, CampoBelo: 12050 },
@@ -329,9 +453,9 @@ export const historicalPriceData = [
 ];
 
 export const portalDistribution = [
-  { name: "RE/MAX (Exclusivos)", value: 42, color: "#DC1C2D" },
-  { name: "ZAP Imóveis", value: 26, color: "#0088FF" },
-  { name: "VivaReal", value: 16, color: "#00C49F" },
-  { name: "OLX", value: 10, color: "#FFBB28" },
-  { name: "Imovelweb", value: 6, color: "#FF8042" }
+  { name: "RE/MAX (Exclusivos)", value: 40, color: "#DC1C2D" },
+  { name: "QuintoAndar", value: 24, color: "#7C3AED" },
+  { name: "ZAP Imóveis", value: 18, color: "#0088FF" },
+  { name: "VivaReal", value: 10, color: "#00C49F" },
+  { name: "OLX", value: 8, color: "#FFBB28" }
 ];
