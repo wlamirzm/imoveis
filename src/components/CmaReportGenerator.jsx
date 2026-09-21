@@ -1,0 +1,357 @@
+import React, { useState, useRef } from 'react';
+import { 
+  FileCheck2, 
+  Sparkles, 
+  Building2, 
+  Bed, 
+  Maximize2, 
+  Download, 
+  CheckCircle2, 
+  Info, 
+  TrendingUp, 
+  DollarSign, 
+  AlertCircle,
+  FileText,
+  Printer
+} from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+export default function CmaReportGenerator({ properties, initialSubjectProperty }) {
+  const reportRef = useRef(null);
+
+  // Imóvel sob avaliação (Subject Property)
+  const [subject, setSubject] = useState(initialSubjectProperty || {
+    title: "Apartamento Modelo para Avaliação",
+    bairro: "Moema",
+    endereco: "Av. Agami, 320",
+    area: 110,
+    quartos: 3,
+    suites: 2,
+    vagas: 2,
+    precoAlvo: 1650000,
+    corretor: "Corretor RE/MAX Especialista"
+  });
+
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  // Buscar Comparáveis Ativos (À Venda) na mesma região com características similares
+  const comparablesActive = properties
+    .filter(p => p.status === 'venda' && (p.bairro === subject.bairro || !subject.bairro))
+    .slice(0, 4);
+
+  // Buscar Comparáveis Vendidos na mesma região
+  const comparablesSold = properties
+    .filter(p => p.status === 'vendido' && (p.bairro === subject.bairro || !subject.bairro))
+    .slice(0, 3);
+
+  // Cálculos de Precificação da ACM
+  const allComparables = [...comparablesActive, ...comparablesSold];
+  const avgCompM2 = allComparables.length > 0
+    ? Math.round(allComparables.reduce((sum, p) => sum + p.precoM2, 0) / allComparables.length)
+    : 14800;
+
+  const precoSugeridoRemax = subject.area * avgCompM2;
+  const precoMinimoVenda = Math.round(precoSugeridoRemax * 0.93);
+  const precoTetoAnuncio = Math.round(precoSugeridoRemax * 1.06);
+
+  // Função para exportar laudo em PDF
+  const handleExportPdf = async () => {
+    if (!reportRef.current) return;
+    setIsGeneratingPdf(true);
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        backgroundColor: '#0D1826',
+        useCORS: true
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`REMAX_ACM_${subject.bairro}_${subject.area}m2.pdf`);
+    } catch (err) {
+      console.error("Erro ao gerar PDF:", err);
+      alert("Relatório visual pronto! Utilize a opção de impressão do navegador (Ctrl+P) ou salvamento em PDF.");
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      
+      {/* Header do Módulo ACM */}
+      <div className="bg-[#131F2E] border border-slate-800 rounded-xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-white">Análise Comparativa de Mercado (ACM / CMA)</h2>
+            <span className="bg-remax-red/20 text-remax-red border border-remax-red/40 text-xs px-2.5 py-0.5 rounded-full font-bold">
+              Padrão RE/MAX Brasil
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            Ferramenta para definição precisa de valor de captação baseada em estatísticas reais de imóveis concorrentes e vendidos.
+          </p>
+        </div>
+
+        <button
+          onClick={handleExportPdf}
+          disabled={isGeneratingPdf}
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-remax-red to-rose-700 hover:from-rose-600 hover:to-remax-red text-white font-bold text-sm rounded-lg shadow-lg shadow-remax-red/20 transition-all cursor-pointer"
+        >
+          <Download className={`w-4 h-4 ${isGeneratingPdf ? 'animate-bounce' : ''}`} />
+          <span>{isGeneratingPdf ? 'Gerando Laudo PDF...' : 'Exportar Relatório ACM (PDF)'}</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Painel Esquerdo: Formulário de Configuração do Imóvel */}
+        <div className="lg:col-span-4 bg-[#131F2E] border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+            <Building2 className="w-4 h-4 text-remax-accent" />
+            Dados do Imóvel sob Avaliação
+          </h3>
+
+          <div>
+            <label className="text-xs text-slate-400 block mb-1">Título do Laudo / Cliente</label>
+            <input
+              type="text"
+              value={subject.title}
+              onChange={(e) => setSubject({ ...subject, title: e.target.value })}
+              className="w-full bg-[#0B131F] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-remax-accent"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Bairro</label>
+              <select
+                value={subject.bairro}
+                onChange={(e) => setSubject({ ...subject, bairro: e.target.value })}
+                className="w-full bg-[#0B131F] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-remax-accent"
+              >
+                <option value="Moema">Moema</option>
+                <option value="Itaim Bibi">Itaim Bibi</option>
+                <option value="Pinheiros">Pinheiros</option>
+                <option value="Jardins">Jardins</option>
+                <option value="Vila Nova Conceição">Vila Nova Conceição</option>
+                <option value="Campo Belo">Campo Belo</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Área Útil (m²)</label>
+              <input
+                type="number"
+                value={subject.area}
+                onChange={(e) => setSubject({ ...subject, area: Number(e.target.value) })}
+                className="w-full bg-[#0B131F] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-remax-accent font-mono font-bold"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Quartos</label>
+              <input
+                type="number"
+                value={subject.quartos}
+                onChange={(e) => setSubject({ ...subject, quartos: Number(e.target.value) })}
+                className="w-full bg-[#0B131F] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-remax-accent"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Suítes</label>
+              <input
+                type="number"
+                value={subject.suites}
+                onChange={(e) => setSubject({ ...subject, suites: Number(e.target.value) })}
+                className="w-full bg-[#0B131F] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-remax-accent"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Vagas</label>
+              <input
+                type="number"
+                value={subject.vagas}
+                onChange={(e) => setSubject({ ...subject, vagas: Number(e.target.value) })}
+                className="w-full bg-[#0B131F] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-remax-accent"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-slate-400 block mb-1">Preço Desejado pelo Proprietário (R$)</label>
+            <input
+              type="number"
+              value={subject.precoAlvo}
+              onChange={(e) => setSubject({ ...subject, precoAlvo: Number(e.target.value) })}
+              className="w-full bg-[#0B131F] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono font-bold text-amber-400 focus:outline-none focus:border-remax-accent"
+            />
+          </div>
+
+          {/* Card Resumo do Desvio do Proprietário */}
+          <div className="bg-[#0B131F] border border-slate-800 rounded-lg p-3 text-xs space-y-2">
+            <div className="flex justify-between text-slate-400">
+              <span>Valor por m² do Proprietário:</span>
+              <span className="font-bold text-amber-400">
+                R$ {Math.round(subject.precoAlvo / (subject.area || 1)).toLocaleString('pt-BR')}/m²
+              </span>
+            </div>
+            <div className="flex justify-between text-slate-400">
+              <span>Média de Mercado ({subject.bairro}):</span>
+              <span className="font-bold text-remax-accent">
+                R$ {avgCompM2.toLocaleString('pt-BR')}/m²
+              </span>
+            </div>
+            {subject.precoAlvo > precoTetoAnuncio && (
+              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-2 rounded text-[11px] flex items-start gap-1.5 mt-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>O valor desejado pelo proprietário está <strong>{Math.round(((subject.precoAlvo / precoSugeridoRemax) - 1) * 100)}% acima</strong> da média recomendada para captação exclusiva!</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Painel Direito: Laudo de Avaliação Profissional (Imprimível em PDF) */}
+        <div className="lg:col-span-8">
+          <div ref={reportRef} className="bg-[#0D1826] border border-slate-800 rounded-xl p-8 shadow-2xl space-y-6 text-slate-100">
+            
+            {/* Header do Laudo */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-remax-red to-remax-blue flex items-center justify-center font-black text-white text-xl shadow-lg">
+                  R/M
+                </div>
+                <div>
+                  <h1 className="text-xl font-black text-white uppercase tracking-wider">
+                    LAUDO DE ANÁLISE COMPARATIVA DE MERCADO (ACM)
+                  </h1>
+                  <p className="text-xs text-remax-red font-bold">
+                    RE/MAX Brasil • Relatório de Avaliação Imobiliária
+                  </p>
+                </div>
+              </div>
+              <div className="text-right text-xs text-slate-400 font-mono">
+                <p>Data: {new Date().toLocaleDateString('pt-BR')}</p>
+                <p>Região: {subject.bairro} - SP</p>
+              </div>
+            </div>
+
+            {/* Quadro de Precificação Sugerida RE/MAX */}
+            <div className="bg-[#131F2E] border border-slate-800 rounded-xl p-6 shadow-inner">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-remax-gold" />
+                Recomendação de Precificação para Captação Exclusiva
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                
+                {/* Preço Mínimo */}
+                <div className="bg-[#0B131F] border border-slate-800 p-4 rounded-xl">
+                  <span className="text-[11px] text-slate-400 uppercase block mb-1">Preço Mínimo (Liquidez Rápida)</span>
+                  <span className="text-lg font-bold text-slate-300 font-mono">
+                    R$ {precoMinimoVenda.toLocaleString('pt-BR')}
+                  </span>
+                  <span className="text-[10px] text-slate-500 block mt-1">
+                    (R$ {Math.round(precoMinimoVenda / subject.area).toLocaleString('pt-BR')}/m²)
+                  </span>
+                </div>
+
+                {/* Preço Recomendado RE/MAX (Destaque) */}
+                <div className="bg-gradient-to-b from-remax-red/20 to-remax-blue/20 border-2 border-remax-red p-4 rounded-xl relative shadow-lg">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-remax-red text-white text-[10px] font-black px-3 py-0.5 rounded-full uppercase">
+                    Recomendado RE/MAX
+                  </span>
+                  <span className="text-2xl font-black text-white font-mono block mt-1">
+                    R$ {Math.round(precoSugeridoRemax).toLocaleString('pt-BR')}
+                  </span>
+                  <span className="text-xs font-bold text-remax-accent block mt-1">
+                    R$ {avgCompM2.toLocaleString('pt-BR')}/m²
+                  </span>
+                </div>
+
+                {/* Preço Teto */}
+                <div className="bg-[#0B131F] border border-slate-800 p-4 rounded-xl">
+                  <span className="text-[11px] text-slate-400 uppercase block mb-1">Preço Teto de Anúncio</span>
+                  <span className="text-lg font-bold text-slate-300 font-mono">
+                    R$ {precoTetoAnuncio.toLocaleString('pt-BR')}
+                  </span>
+                  <span className="text-[10px] text-slate-500 block mt-1">
+                    (R$ {Math.round(precoTetoAnuncio / subject.area).toLocaleString('pt-BR')}/m²)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Imóveis Concorrentes (Ativos à Venda) */}
+            <div>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                Imóveis Concorrentes no Mercado ({comparablesActive.length} Imóveis Ativos)
+              </h3>
+
+              <div className="space-y-2">
+                {comparablesActive.map((comp) => (
+                  <div key={comp.id} className="bg-[#131F2E] border border-slate-800/80 p-3 rounded-lg flex items-center justify-between text-xs">
+                    <div>
+                      <span className="font-bold text-white block">{comp.title}</span>
+                      <span className="text-slate-400">{comp.endereco} • {comp.area}m² • {comp.quartos} dorms</span>
+                    </div>
+                    <div className="text-right font-mono">
+                      <span className="font-bold text-white block">R$ {comp.preco.toLocaleString('pt-BR')}</span>
+                      <span className="text-remax-accent font-bold text-[11px]">R$ {comp.precoM2.toLocaleString('pt-BR')}/m²</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Imóveis Referência (Vendidos Recentemente) */}
+            <div>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                Imóveis Vendidos na Região (Transacionados)
+              </h3>
+
+              <div className="space-y-2">
+                {comparablesSold.map((comp) => (
+                  <div key={comp.id} className="bg-[#131F2E] border border-slate-800/80 p-3 rounded-lg flex items-center justify-between text-xs">
+                    <div>
+                      <span className="font-bold text-emerald-400 block">{comp.title} (VENDIDO)</span>
+                      <span className="text-slate-400">{comp.endereco} • {comp.area}m² • Vendido em {comp.dataVenda}</span>
+                    </div>
+                    <div className="text-right font-mono">
+                      <span className="font-bold text-white block">R$ {comp.preco.toLocaleString('pt-BR')}</span>
+                      <span className="text-emerald-400 font-bold text-[11px]">R$ {comp.precoM2.toLocaleString('pt-BR')}/m²</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Assinatura / Rodapé */}
+            <div className="border-t border-slate-800 pt-4 flex items-center justify-between text-[11px] text-slate-400">
+              <div>
+                <span>Laudo emitido por: <strong>{subject.corretor}</strong></span>
+                <span className="block">RE/MAX Brasil • Todos os direitos reservados</span>
+              </div>
+              <div className="text-right">
+                <span className="font-bold text-slate-300">RE/MAX Market Intelligence System</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
