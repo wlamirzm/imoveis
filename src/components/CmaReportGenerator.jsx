@@ -12,10 +12,13 @@ import {
   DollarSign, 
   AlertCircle,
   FileText,
-  Printer
+  Printer,
+  Landmark,
+  Train
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { getDadosUrbanisticosPMSP } from '../services/geosampaService';
 
 export default function CmaReportGenerator({ properties, initialSubjectProperty }) {
   const reportRef = useRef(null);
@@ -34,6 +37,9 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
   });
 
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  // Buscar dados urbanísticos oficiais da Prefeitura de SP (GeoSampa)
+  const dadosPMSP = getDadosUrbanisticosPMSP(subject.bairro, subject.precoAlvo);
 
   // Buscar Comparáveis Ativos (À Venda) na mesma região com características similares
   const comparablesActive = properties
@@ -71,7 +77,7 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save(`REMAX_ACM_${subject.bairro}_${subject.area}m2.pdf`);
+      pdf.save(`REMAX_ACM_PMSP_${subject.bairro}_${subject.area}m2.pdf`);
     } catch (err) {
       console.error("Erro ao gerar PDF:", err);
       alert("Relatório visual pronto! Utilize a opção de impressão do navegador (Ctrl+P) ou salvamento em PDF.");
@@ -87,13 +93,13 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
       <div className="bg-[#131F2E] border border-slate-800 rounded-xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-white">Análise Comparativa de Mercado (ACM / CMA) - Zona Sul SP</h2>
+            <h2 className="text-lg font-bold text-white">Análise Comparativa de Mercado (ACM) + Dados PMSP</h2>
             <span className="bg-remax-red/20 text-remax-red border border-remax-red/40 text-xs px-2.5 py-0.5 rounded-full font-bold">
-              Padrão RE/MAX Brasil
+              Integração GeoSampa & ITBI PMSP
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Ferramenta para definição precisa de valor de captação baseada em estatísticas reais de imóveis concorrentes e vendidos (Morumbi, Brooklin, Moema...).
+            Laudo de avaliação com cruzamento de comparáveis RE/MAX, zoneamento do Plano Diretor de SP e estimativa fiscal de ITBI/IPTU.
           </p>
         </div>
 
@@ -199,26 +205,24 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
             />
           </div>
 
-          {/* Card Resumo do Desvio do Proprietário */}
+          {/* Dados Oficiais PMSP (Zoneamento e ITBI) */}
           <div className="bg-[#0B131F] border border-slate-800 rounded-lg p-3 text-xs space-y-2">
+            <h4 className="font-bold text-white flex items-center gap-1.5 text-[11px] border-b border-slate-800 pb-1">
+              <Landmark className="w-3.5 h-3.5 text-amber-400" />
+              Indicadores Oficiais Prefeitura de SP
+            </h4>
             <div className="flex justify-between text-slate-400">
-              <span>Valor por m² do Proprietário:</span>
-              <span className="font-bold text-amber-400">
-                R$ {Math.round(subject.precoAlvo / (subject.area || 1)).toLocaleString('pt-BR')}/m²
-              </span>
+              <span>Zoneamento (GeoSampa):</span>
+              <span className="font-bold text-white">{dadosPMSP.zoneamento.split('-')[0]}</span>
             </div>
             <div className="flex justify-between text-slate-400">
-              <span>Média de Mercado ({subject.bairro}):</span>
-              <span className="font-bold text-remax-accent">
-                R$ {avgCompM2.toLocaleString('pt-BR')}/m²
-              </span>
+              <span>Transporte Próximo:</span>
+              <span className="font-bold text-emerald-400">{dadosPMSP.distanciaMetroM}m do Metrô</span>
             </div>
-            {subject.precoAlvo > precoTetoAnuncio && (
-              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-2 rounded text-[11px] flex items-start gap-1.5 mt-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>O valor desejado pelo proprietário está <strong>{Math.round(((subject.precoAlvo / precoSugeridoRemax) - 1) * 100)}% acima</strong> da média recomendada para captação exclusiva no {subject.bairro}!</span>
-              </div>
-            )}
+            <div className="flex justify-between text-slate-400">
+              <span>Estimativa ITBI PMSP (3%):</span>
+              <span className="font-bold text-amber-400">R$ {dadosPMSP.itbiEstimado.toLocaleString('pt-BR')}</span>
+            </div>
           </div>
         </div>
 
@@ -226,7 +230,7 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
         <div className="lg:col-span-8">
           <div ref={reportRef} className="bg-[#0D1826] border border-slate-800 rounded-xl p-8 shadow-2xl space-y-6 text-slate-100">
             
-            {/* Header do Laudo */}
+            {/* Header do Laudo com Marca RE/MAX & Prefeitura SP */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-5">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-remax-red to-remax-blue flex items-center justify-center font-black text-white text-xl shadow-lg">
@@ -236,14 +240,30 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
                   <h1 className="text-xl font-black text-white uppercase tracking-wider">
                     LAUDO DE ANÁLISE COMPARATIVA DE MERCADO (ACM)
                   </h1>
-                  <p className="text-xs text-remax-red font-bold">
-                    RE/MAX Brasil • Relatório de Avaliação Imobiliária (Zona Sul SP)
+                  <p className="text-xs text-remax-red font-bold flex items-center gap-1">
+                    RE/MAX Brasil • Cruzamento de Dados Oficiais Prefeitura SP (GeoSampa)
                   </p>
                 </div>
               </div>
               <div className="text-right text-xs text-slate-400 font-mono">
                 <p>Data: {new Date().toLocaleDateString('pt-BR')}</p>
                 <p>Região: {subject.bairro} - Zona Sul SP</p>
+              </div>
+            </div>
+
+            {/* Quadro de Informações Urbanísticas Oficiais PMSP */}
+            <div className="bg-[#131F2E] border border-slate-800 rounded-xl p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase block font-bold">Zoneamento Municipal (PMSP)</span>
+                <span className="font-bold text-white block mt-0.5">{dadosPMSP.zoneamento}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase block font-bold">Acessibilidade a Transporte</span>
+                <span className="font-bold text-emerald-400 block mt-0.5">{dadosPMSP.metroProximo} ({dadosPMSP.distanciaMetroM}m)</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase block font-bold">Estimativa de Imposto ITBI (3%)</span>
+                <span className="font-bold text-amber-400 block mt-0.5">R$ {dadosPMSP.itbiEstimado.toLocaleString('pt-BR')}</span>
               </div>
             </div>
 
@@ -343,7 +363,7 @@ export default function CmaReportGenerator({ properties, initialSubjectProperty 
             <div className="border-t border-slate-800 pt-4 flex items-center justify-between text-[11px] text-slate-400">
               <div>
                 <span>Laudo emitido por: <strong>{subject.corretor}</strong></span>
-                <span className="block">RE/MAX Brasil • Zona Sul São Paulo</span>
+                <span className="block">RE/MAX Brasil • Fonte de Dados: GeoSampa / Prefeitura SP</span>
               </div>
               <div className="text-right">
                 <span className="font-bold text-slate-300">RE/MAX Market Intelligence System</span>
