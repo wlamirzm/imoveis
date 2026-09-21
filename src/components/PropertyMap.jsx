@@ -80,9 +80,10 @@ function MapCenterUpdater({ center, radiusMeters }) {
   return null;
 }
 
-export default function PropertyMap({ properties, onSelectForCma, selectedBairro, activeRadiusSearch }) {
+export default function PropertyMap({ properties, onSelectForCma, selectedBairro, activeRadiusSearch, itbiList = [] }) {
   const [activeProperty, setActiveProperty] = useState(null);
   const [selectedStyleKey, setSelectedStyleKey] = useState('cartoDark');
+  const [showITBILayer, setShowITBILayer] = useState(true);
 
   const currentTileStyle = MAP_STYLES[selectedStyleKey];
 
@@ -209,7 +210,7 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
         
         {/* Map Header Controls */}
         <div className="p-3 bg-[#0D1826] border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 z-10">
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-3 text-xs">
             <span className="flex items-center gap-1.5 text-slate-300">
               <span className="w-2.5 h-2.5 rounded-full bg-remax-red"></span> RE/MAX Exclusivo
             </span>
@@ -219,9 +220,15 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
             <span className="flex items-center gap-1.5 text-slate-300">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Portais À Venda
             </span>
-            <span className="flex items-center gap-1.5 text-slate-300">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Vendidos
-            </span>
+            <label className="flex items-center gap-1.5 text-emerald-400 font-semibold cursor-pointer bg-emerald-950/60 border border-emerald-500/30 px-2 py-1 rounded">
+              <input 
+                type="checkbox" 
+                checked={showITBILayer} 
+                onChange={(e) => setShowITBILayer(e.target.checked)}
+                className="accent-emerald-500" 
+              />
+              📄 Exibir ITBI PMSP ({itbiList.length})
+            </label>
           </div>
 
           {/* Seletor de Camada de Mapa Livre */}
@@ -300,6 +307,53 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
                 })}
               />
             )}
+
+            {/* Marcadores das Transações de ITBI da PMSP */}
+            {showITBILayer && itbiList.map((itbi) => (
+              <Marker
+                key={itbi.id}
+                position={[itbi.lat, itbi.lng]}
+                icon={L.divIcon({
+                  className: 'itbi-map-pin',
+                  html: `
+                    <div style="
+                      background-color: #10B981;
+                      color: white;
+                      padding: 3px 6px;
+                      border-radius: 10px;
+                      font-weight: 800;
+                      font-size: 10px;
+                      border: 2px solid white;
+                      box-shadow: 0 4px 10px rgba(16,185,129,0.5);
+                      white-space: nowrap;
+                      transform: translate(-50%, -100%);
+                    ">
+                      📄 ITBI R$ ${Math.round(itbi.precoM2Real / 1000)}k/m²
+                    </div>
+                  `,
+                  iconSize: [80, 26],
+                  iconAnchor: [40, 26]
+                })}
+              >
+                <Popup>
+                  <div className="w-60 text-slate-100 p-1">
+                    <div className="bg-emerald-950/80 border border-emerald-500/40 p-2 rounded-lg mb-2 text-center">
+                      <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Venda Concretizada (ITBI PMSP)</span>
+                      <p className="text-lg font-black text-emerald-400 mt-0.5">R$ {itbi.valorTransacao.toLocaleString('pt-BR')}</p>
+                      <p className="text-xs font-semibold text-slate-200">R$ {Math.round(itbi.precoM2Real).toLocaleString('pt-BR')}/m²</p>
+                    </div>
+                    <p className="text-xs font-bold text-white leading-tight">{itbi.logradouro}, {itbi.numero}</p>
+                    <p className="text-[11px] text-slate-400 mb-2">{itbi.bairro} ({itbi.distrito})</p>
+                    <div className="text-[11px] space-y-1 text-slate-300 border-t border-slate-800 pt-2">
+                      <p><b>SQL:</b> <span className="font-mono text-slate-400">{itbi.sql}</span></p>
+                      <p><b>Área Construída:</b> {itbi.areaM2} m²</p>
+                      <p><b>ITBI Pago (3%):</b> R$ {itbi.valorItbi.toLocaleString('pt-BR')}</p>
+                      <p><b>Data do Imposto:</b> {itbi.dataArrecadacao}</p>
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
 
             {properties.map((prop) => (
               <Marker

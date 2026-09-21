@@ -12,6 +12,8 @@ import { runScraperJob } from './services/scraperService';
 import { fetchPropertiesFromSupabase, savePropertyToSupabase } from './lib/supabaseClient';
 import { generateQuintoAndarListingsInRadius, calculateHaversineDistanceMeters } from './services/quintoAndarService';
 import { getDadosUrbanisticosPMSP } from './services/geosampaService';
+import { fetchITBITransactions, calculateITBIMetrics } from './services/itbiService';
+import { ITBIAnalyticsPanel } from './components/ITBIAnalyticsPanel';
 import { Bot, CheckCircle2, Database, Landmark, Train } from 'lucide-react';
 
 export default function App() {
@@ -24,6 +26,7 @@ export default function App() {
   const [activeRadiusSearch, setActiveRadiusSearch] = useState(null);
   const [quintoAndarListings, setQuintoAndarListings] = useState([]);
   const [pmspInfoInRadius, setPmspInfoInRadius] = useState(null);
+  const [itbiList, setItbiList] = useState([]);
 
   // Imóvel selecionado para a ACM
   const [selectedForCma, setSelectedForCma] = useState(null);
@@ -44,7 +47,7 @@ export default function App() {
   ]);
   const [toastNotification, setToastNotification] = useState(null);
 
-  // Carregar imóveis reais do Supabase na inicialização
+  // Carregar imóveis reais do Supabase e ITBI padrão na inicialização
   useEffect(() => {
     async function loadSupabaseData() {
       const dbProperties = await fetchPropertiesFromSupabase();
@@ -53,12 +56,15 @@ export default function App() {
         setIsSupabaseConnected(true);
         setScraperLogs(prev => [...prev, `✅ Conectado ao Supabase PostgreSQL (${dbProperties.length} imóveis na tabela 'properties')`]);
       }
+      
+      const initialItbi = await fetchITBITransactions(-23.6062, -46.6948, 2000);
+      setItbiList(initialItbi);
     }
     loadSupabaseData();
   }, []);
 
-  // Handler para Busca por Raio Geográfico Unificada (TODOS os Portais + PMSP GeoSampa)
-  const handleApplyRadiusSearch = (searchInfo) => {
+  // Handler para Busca por Raio Geográfico Unificada (TODOS os Portais + PMSP GeoSampa + ITBI)
+  const handleApplyRadiusSearch = async (searchInfo) => {
     setActiveRadiusSearch(searchInfo);
     
     // Gerar ofertas do QuintoAndar no raio
@@ -69,19 +75,29 @@ export default function App() {
       "Brooklin"
     );
 
+    // Buscar transações de ITBI no raio geográfico
+    const fetchedItbi = await fetchITBITransactions(
+      searchInfo.centerLat,
+      searchInfo.centerLng,
+      searchInfo.radiusMeters
+    );
+    setItbiList(fetchedItbi);
+
     // Calcular dados municipais da Prefeitura de SP no ponto central
     const pmspData = getDadosUrbanisticosPMSP("Brooklin", 1850000);
     setPmspInfoInRadius(pmspData);
 
     setQuintoAndarListings(qaResults);
-    setToastNotification(`Filtro por raio de ${searchInfo.radiusMeters >= 1000 ? `${searchInfo.radiusMeters / 1000}km` : `${searchInfo.radiusMeters}m`} aplicado para TODOS os portais + PMSP!`);
+    setToastNotification(`Filtro por raio de ${searchInfo.radiusMeters >= 1000 ? `${searchInfo.radiusMeters / 1000}km` : `${searchInfo.radiusMeters}m`} aplicado para TODOS os portais + PMSP ITBI!`);
     setTimeout(() => setToastNotification(null), 4000);
   };
 
-  const handleClearRadiusSearch = () => {
+  const handleClearRadiusSearch = async () => {
     setActiveRadiusSearch(null);
     setQuintoAndarListings([]);
     setPmspInfoInRadius(null);
+    const defaultItbi = await fetchITBITransactions(-23.6062, -46.6948, 2000);
+    setItbiList(defaultItbi);
   };
 
   // Handler para disparar a Coleta Automatizada e gravar no Supabase
@@ -191,6 +207,11 @@ export default function App() {
     return Math.round(sum / filteredProperties.length);
   }, [filteredProperties]);
 
+  // Cálculo de Métricas Consolidadas de ITBI PMSP vs Anúncios Ativos
+  const itbiMetrics = useMemo(() => {
+    return calculateITBIMetrics(itbiList, filteredProperties);
+  }, [itbiList, filteredProperties]);
+
   // Handler para selecionar um imóvel no mapa e ir direto para a ACM
   const handleSelectForCma = (property) => {
     setSelectedForCma({
@@ -242,7 +263,7 @@ export default function App() {
               </div>
               <div>
                 <span className="font-bold text-white block text-sm">
-                  Dados Oficiais Prefeitura SP (GeoSampa) no Raio de {activeRadiusSearch.radiusMeters >= 1000 ? `${activeRadiusSearch.radiusMeters / 1000}km` : `${activeRadiusSearch.radiusMeters}m`}
+                  Dados Oficiais Prefeitura SP (GeoSampa + ITBI) no Raio de {activeRadiusSearch.radiusMeters >= 1000 ? `${activeRadiusSearch.radiusMeters / 1000}km` : `${activeRadiusSearch.radiusMeters}m`}
                 </span>
                 <span className="text-slate-400">
                   Endereço Alvo: <strong>{activeRadiusSearch.addressText}</strong>
@@ -256,12 +277,12 @@ export default function App() {
                 <span className="font-bold text-amber-400">{pmspInfoInRadius.zoneamento}</span>
               </div>
               <div className="bg-[#0B131F] px-3 py-1.5 rounded-lg border border-slate-800">
-                <span className="text-slate-400 block text-[10px]">Estação Próxima:</span>
-                <span className="font-bold text-emerald-400">{pmspInfoInRadius.metroProximo} ({pmspInfoInRadius.distanciaMetroM}m)</span>
+                <span className="text-slate-400 block text-[10px]">Vendas ITBI no Raio:</span>
+                <span className="font-bold text-emerald-400">{itbiMetrics.totalVendas} imóveis</span>
               </div>
               <div className="bg-[#0B131F] px-3 py-1.5 rounded-lg border border-slate-800">
-                <span className="text-slate-400 block text-[10px]">Imposto ITBI (3%):</span>
-                <span className="font-bold text-white">R$ {pmspInfoInRadius.itbiEstimado.toLocaleString('pt-BR')}</span>
+                <span className="text-slate-400 block text-[10px]">Margem de Negociação:</span>
+                <span className="font-bold text-emerald-400 font-mono">-{itbiMetrics.descontoMedioPct}%</span>
               </div>
             </div>
           </div>
@@ -285,6 +306,15 @@ export default function App() {
           />
         )}
 
+        {/* Painel Analítico de ITBI (Exibido nas Abas Mapa e Analytics) */}
+        {(activeTab === 'mapa' || activeTab === 'analytics') && (
+          <ITBIAnalyticsPanel
+            metrics={itbiMetrics}
+            itbiList={itbiList}
+            selectedRadiusLabel={activeRadiusSearch ? (activeRadiusSearch.radiusMeters >= 1000 ? `${activeRadiusSearch.radiusMeters / 1000} km` : `${activeRadiusSearch.radiusMeters} m`) : '2 km'}
+          />
+        )}
+
         {/* Renderização Condicional de Abas */}
         {activeTab === 'mapa' && (
           <PropertyMap
@@ -292,6 +322,7 @@ export default function App() {
             onSelectForCma={handleSelectForCma}
             selectedBairro={selectedBairro}
             activeRadiusSearch={activeRadiusSearch}
+            itbiList={itbiList}
           />
         )}
 
