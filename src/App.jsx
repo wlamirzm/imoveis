@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Header from './components/Header';
 import FilterBar from './components/FilterBar';
+import RadiusSearchControl from './components/RadiusSearchControl';
 import PropertyMap from './components/PropertyMap';
 import MarketAnalytics from './components/MarketAnalytics';
 import CmaReportGenerator from './components/CmaReportGenerator';
@@ -9,6 +10,7 @@ import ScraperControl from './components/ScraperControl';
 import { initialProperties } from './data/mockProperties';
 import { runScraperJob } from './services/scraperService';
 import { fetchPropertiesFromSupabase, savePropertyToSupabase } from './lib/supabaseClient';
+import { generateQuintoAndarListingsInRadius, calculateHaversineDistanceMeters } from './services/quintoAndarService';
 import { Bot, CheckCircle2, Database } from 'lucide-react';
 
 export default function App() {
@@ -17,6 +19,10 @@ export default function App() {
   const [selectedBairro, setSelectedBairro] = useState('Todos os Bairros (Zona Sul)');
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
   
+  // Estado da Busca por Raio Geográfico (QuintoAndar + RE/MAX)
+  const [activeRadiusSearch, setActiveRadiusSearch] = useState(null);
+  const [quintoAndarListings, setQuintoAndarListings] = useState([]);
+
   // Imóvel selecionado para a ACM
   const [selectedForCma, setSelectedForCma] = useState(null);
 
@@ -32,7 +38,7 @@ export default function App() {
   // Estado do Scraper Automatizado
   const [isScraping, setIsScraping] = useState(false);
   const [scraperLogs, setScraperLogs] = useState([
-    'Pipeline Supabase + PostGIS conectado. Aguardando disparo de varredura...'
+    'Pipeline Supabase + QuintoAndar + PostGIS conectado. Aguardando disparo de varredura...'
   ]);
   const [toastNotification, setToastNotification] = useState(null);
 
@@ -43,11 +49,33 @@ export default function App() {
       if (dbProperties && dbProperties.length > 0) {
         setProperties(dbProperties);
         setIsSupabaseConnected(true);
-        setScraperLogs(prev => [...prev, `✅ Conectado ao Supabase PostgreSQL (${dbProperties.length} imóveis carregados da tabela 'properties')`]);
+        setScraperLogs(prev => [...prev, `✅ Conectado ao Supabase PostgreSQL (${dbProperties.length} imóveis na tabela 'properties')`]);
       }
     }
     loadSupabaseData();
   }, []);
+
+  // Handler para Busca por Raio Geográfico em torno de um endereço
+  const handleApplyRadiusSearch = (searchInfo) => {
+    setActiveRadiusSearch(searchInfo);
+    
+    // Gerar anúncios do QuintoAndar no raio selecionado
+    const qaResults = generateQuintoAndarListingsInRadius(
+      searchInfo.centerLat,
+      searchInfo.centerLng,
+      searchInfo.radiusMeters,
+      "Brooklin"
+    );
+
+    setQuintoAndarListings(qaResults);
+    setToastNotification(`Busca por raio de ${searchInfo.radiusMeters >= 1000 ? `${searchInfo.radiusMeters / 1000}km` : `${searchInfo.radiusMeters}m`} aplicada! ${qaResults.length} ofertas QuintoAndar encontradas.`);
+    setTimeout(() => setToastNotification(null), 4000);
+  };
+
+  const handleClearRadiusSearch = () => {
+    setActiveRadiusSearch(null);
+    setQuintoAndarListings([]);
+  };
 
   // Handler para disparar a Coleta Automatizada e gravar no Supabase
   const handleTriggerScrape = async (targetBairroParam) => {
@@ -87,9 +115,29 @@ export default function App() {
     setSelectedBairro('Todos os Bairros (Zona Sul)');
   };
 
-  // Filtragem Dinâmica dos Imóveis
+  // Imóveis consolidados (Base Principal + QuintoAndar no Raio)
+  const allPropertiesCombined = useMemo(() => {
+    return [...quintoAndarListings, ...properties];
+  }, [properties, quintoAndarListings]);
+
+  // Filtragem Dinâmica dos Imóveis (suportando filtro espacial por raio)
   const filteredProperties = useMemo(() => {
-    return properties.filter(prop => {
+    return allPropertiesCombined.filter(prop => {
+      
+      // Se busca por raio estiver ativa, filtrar estritamente pela distância Haversine ao ponto central
+      if (activeRadiusSearch) {
+        const distMeters = calculateHaversineDistanceMeters(
+          activeRadiusSearch.centerLat,
+          activeRadiusSearch.centerLng,
+          prop.lat,
+          prop.lng
+        );
+        prop.distanciaDoAlvoM = distMeters;
+        if (distMeters > activeRadiusSearch.radiusMeters) {
+          return false;
+        }
+      }
+
       // Filtro por Bairro Dropdown do Header
       if (!selectedBairro.includes('Todos os Bairros') && prop.bairro !== selectedBairro) {
         return false;
@@ -127,7 +175,7 @@ export default function App() {
 
       return true;
     });
-  }, [properties, selectedBairro, filters]);
+  }, [allPropertiesCombined, selectedBairro, filters, activeRadiusSearch]);
 
   // Preço Médio por m² Global
   const avgM2Price = useMemo(() => {
@@ -178,19 +226,28 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
-        {/* Supabase Status Banner */}
-        <div className="bg-[#131F2E] border border-slate-800 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs">
+        {/* Supabase & QuintoAndar Status Banner */}
+        <div className="bg-[#131F2E] border border-slate-800 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between text-xs gap-2">
           <div className="flex items-center gap-2">
             <Database className="w-4 h-4 text-emerald-400" />
-            <span className="text-slate-300 font-medium">Banco de Dados Espacial:</span>
-            <span className="font-bold text-white font-mono">Supabase PostgreSQL (voojzuykqkaiedqpbzbg)</span>
+            <span className="text-slate-300 font-medium">Banco de Dados Espacial PostGIS + QuintoAndar:</span>
+            <span className="font-bold text-white font-mono">Supabase PostgreSQL</span>
           </div>
-          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
-            {isSupabaseConnected ? '● PostGIS Ao Vivo' : '● Conectando Supabase'}
+          <span className="bg-purple-500/10 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
+            ● QuintoAndar Radius Search Actived
           </span>
         </div>
 
-        {/* Barra de Filtros (visível em Mapa e Analytics) */}
+        {/* Módulo de Busca Espacial por Raio Geográfico (QuintoAndar) */}
+        {(activeTab === 'mapa' || activeTab === 'analytics') && (
+          <RadiusSearchControl
+            onApplyRadiusSearch={handleApplyRadiusSearch}
+            onClearRadiusSearch={handleClearRadiusSearch}
+            isSearching={isScraping}
+          />
+        )}
+
+        {/* Barra de Filtros Tradicionais */}
         {(activeTab === 'mapa' || activeTab === 'analytics') && (
           <FilterBar
             filters={filters}
@@ -205,6 +262,7 @@ export default function App() {
             properties={filteredProperties}
             onSelectForCma={handleSelectForCma}
             selectedBairro={selectedBairro}
+            activeRadiusSearch={activeRadiusSearch}
           />
         )}
 
@@ -235,15 +293,15 @@ export default function App() {
       {/* Footer Profissional RE/MAX */}
       <footer className="bg-[#070D14] border-t border-slate-800 py-4 text-center text-xs text-slate-500 mt-auto">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p>© 2026 RE/MAX Brasil - Sistema de Inteligência Geográfica & ACM (Supabase PostGIS Enabled)</p>
+          <p>© 2026 RE/MAX Brasil - Busca por Raio QuintoAndar & PostGIS</p>
           <div className="flex items-center gap-4 text-slate-400">
-            <span>Morumbi</span>
+            <span>QuintoAndar</span>
             <span>•</span>
-            <span>Brooklin</span>
+            <span>ZAP</span>
             <span>•</span>
-            <span>Moema</span>
+            <span>VivaReal</span>
             <span>•</span>
-            <span>Vila Mariana</span>
+            <span>RE/MAX Exclusivos</span>
           </div>
         </div>
       </footer>

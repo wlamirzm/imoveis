@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { 
   Building2, 
@@ -12,7 +12,7 @@ import {
   ArrowUpRight,
   Sparkles,
   Layers,
-  CheckCircle2
+  Target
 } from 'lucide-react';
 
 // Tile Layers 100% Livres & Gratuitos para Leaflet / OpenStreetMap
@@ -35,15 +35,16 @@ const MAP_STYLES = {
   esriSatellite: {
     name: 'Satélite (Esri World Imagery)',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri'
   }
 };
 
-// Custom Marker Icons para Leaflet
-const createCustomIcon = (status, isRemax, priceM2) => {
+// Custom Marker Icons para Leaflet (incluindo QuintoAndar Roxo)
+const createCustomIcon = (status, isRemax, priceM2, portal) => {
   let bgColor = '#0088FF'; // Default Venda Blue
   if (status === 'vendido') bgColor = '#10B981'; // Sold Emerald
   if (isRemax) bgColor = '#DC1C2D'; // RE/MAX Red
+  if (portal === 'QuintoAndar') bgColor = '#7C3AED'; // QuintoAndar Purple
 
   return L.divIcon({
     className: 'custom-map-pin',
@@ -63,7 +64,7 @@ const createCustomIcon = (status, isRemax, priceM2) => {
         gap: 4px;
         transform: translate(-50%, -100%);
       ">
-        ${isRemax ? '🎈' : '🏠'} R$ ${Math.round(priceM2 / 1000)}k/m²
+        ${portal === 'QuintoAndar' ? '🟣' : isRemax ? '🎈' : '🏠'} R$ ${Math.round(priceM2 / 1000)}k/m²
       </div>
     `,
     iconSize: [80, 30],
@@ -71,23 +72,24 @@ const createCustomIcon = (status, isRemax, priceM2) => {
   });
 };
 
-// Componente para re-centralizar o mapa quando a região muda
-function MapCenterUpdater({ center }) {
+// Componente para re-centralizar o mapa quando a região ou busca por raio muda
+function MapCenterUpdater({ center, radiusMeters }) {
   const map = useMap();
-  map.setView(center, map.getZoom());
+  const zoomLevel = radiusMeters ? (radiusMeters <= 500 ? 16 : radiusMeters <= 1000 ? 15 : 14) : 14;
+  map.setView(center, zoomLevel);
   return null;
 }
 
-export default function PropertyMap({ properties, onSelectForCma, selectedBairro }) {
+export default function PropertyMap({ properties, onSelectForCma, selectedBairro, activeRadiusSearch }) {
   const [activeProperty, setActiveProperty] = useState(null);
   const [selectedStyleKey, setSelectedStyleKey] = useState('cartoDark');
 
   const currentTileStyle = MAP_STYLES[selectedStyleKey];
 
-  // Determinar centro do mapa baseado nas propriedades
-  const defaultCenter = properties.length > 0 
-    ? [properties[0].lat, properties[0].lng] 
-    : [-23.6035, -46.6612]; // Moema default
+  // Determinar centro do mapa baseado na busca por raio ou no primeiro imóvel
+  const defaultCenter = activeRadiusSearch
+    ? [activeRadiusSearch.centerLat, activeRadiusSearch.centerLng]
+    : (properties.length > 0 ? [properties[0].lat, properties[0].lng] : [-23.6080, -46.6940]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-210px)] min-h-[600px]">
@@ -98,14 +100,14 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Building2 className="w-4 h-4 text-remax-red" />
-              Imóveis Mapeados (Leaflet)
+              Imóveis no Perímetro {activeRadiusSearch ? `(${activeRadiusSearch.radiusMeters}m)` : ''}
             </h3>
             <p className="text-xs text-slate-400">
-              {properties.length} imóveis na região {selectedBairro !== 'Todos os Bairros' ? `(${selectedBairro})` : ''}
+              {properties.length} imóveis encontrados {selectedBairro !== 'Todos os Bairros (Zona Sul)' ? `em ${selectedBairro}` : ''}
             </p>
           </div>
           <span className="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-mono">
-            {properties.filter(p => p.status === 'venda').length} À Venda / {properties.filter(p => p.status === 'vendido').length} Vendidos
+            {properties.filter(p => p.portal === 'QuintoAndar').length} QuintoAndar
           </span>
         </div>
 
@@ -114,7 +116,7 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
           {properties.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
               <MapPin className="w-10 h-10 mx-auto text-slate-600 mb-2" />
-              <p className="text-sm">Nenhum imóvel encontrado com os filtros atuais.</p>
+              <p className="text-sm">Nenhum imóvel encontrado no raio selecionado.</p>
             </div>
           ) : (
             properties.map((prop) => (
@@ -136,13 +138,15 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
                       className="w-full h-full object-cover" 
                     />
                     <span className={`absolute top-1 left-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                      prop.status === 'vendido' 
-                        ? 'bg-emerald-600 text-white' 
-                        : prop.remaxExclusivo 
-                          ? 'bg-remax-red text-white' 
-                          : 'bg-blue-600 text-white'
+                      prop.portal === 'QuintoAndar'
+                        ? 'bg-purple-600 text-white'
+                        : prop.status === 'vendido' 
+                          ? 'bg-emerald-600 text-white' 
+                          : prop.remaxExclusivo 
+                            ? 'bg-remax-red text-white' 
+                            : 'bg-blue-600 text-white'
                     }`}>
-                      {prop.status === 'vendido' ? 'VENDIDO' : prop.portal}
+                      {prop.portal}
                     </span>
                   </div>
 
@@ -166,6 +170,12 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
                         (R$ {prop.precoM2.toLocaleString('pt-BR')}/m²)
                       </span>
                     </div>
+
+                    {prop.distanciaDoAlvoM && (
+                      <span className="text-[10px] text-amber-400 font-bold block mt-0.5">
+                        📍 a {prop.distanciaDoAlvoM}m do endereço alvo
+                      </span>
+                    )}
 
                     <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400">
                       <div className="flex items-center gap-2">
@@ -194,24 +204,27 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
         </div>
       </div>
 
-      {/* Coluna Direita: Mapa Interativo Leaflet (Com Seletor de Camadas Livres) */}
+      {/* Coluna Direita: Mapa Interativo Leaflet (Com Círculo de Raio) */}
       <div className="lg:col-span-8 bg-[#131F2E] border border-slate-800 rounded-xl overflow-hidden shadow-xl relative flex flex-col">
         
-        {/* Map Header Controls com Seletor de Tile Provider Livre */}
+        {/* Map Header Controls */}
         <div className="p-3 bg-[#0D1826] border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 z-10">
           <div className="flex items-center gap-4 text-xs">
             <span className="flex items-center gap-1.5 text-slate-300">
               <span className="w-2.5 h-2.5 rounded-full bg-remax-red"></span> RE/MAX Exclusivo
             </span>
             <span className="flex items-center gap-1.5 text-slate-300">
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span> QuintoAndar
+            </span>
+            <span className="flex items-center gap-1.5 text-slate-300">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Portais À Venda
             </span>
             <span className="flex items-center gap-1.5 text-slate-300">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Imóvel Vendido
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Vendidos
             </span>
           </div>
 
-          {/* Seletor de Camada de Mapa Livre (OpenStreetMap / Leaflet) */}
+          {/* Seletor de Camada de Mapa Livre */}
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4 text-emerald-400" />
             <select
@@ -240,13 +253,59 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
               url={currentTileStyle.url}
             />
             
-            <MapCenterUpdater center={defaultCenter} />
+            <MapCenterUpdater 
+              center={defaultCenter} 
+              radiusMeters={activeRadiusSearch ? activeRadiusSearch.radiusMeters : null} 
+            />
+
+            {/* Círculo do Raio de Busca */}
+            {activeRadiusSearch && (
+              <Circle
+                center={[activeRadiusSearch.centerLat, activeRadiusSearch.centerLng]}
+                radius={activeRadiusSearch.radiusMeters}
+                pathOptions={{
+                  color: '#DC1C2D',
+                  fillColor: '#DC1C2D',
+                  fillOpacity: 0.15,
+                  weight: 2,
+                  dashArray: '6, 6'
+                }}
+              />
+            )}
+
+            {/* Marcador do Centro do Endereço Alvo */}
+            {activeRadiusSearch && (
+              <Marker
+                position={[activeRadiusSearch.centerLat, activeRadiusSearch.centerLng]}
+                icon={L.divIcon({
+                  className: 'target-center-pin',
+                  html: `
+                    <div style="
+                      background-color: #DC1C2D;
+                      color: white;
+                      padding: 6px 10px;
+                      border-radius: 20px;
+                      font-weight: 800;
+                      font-size: 11px;
+                      border: 3px solid white;
+                      box-shadow: 0 0 20px rgba(220,28,45,0.8);
+                      white-space: nowrap;
+                      transform: translate(-50%, -100%);
+                    ">
+                      🎯 Endereço Alvo
+                    </div>
+                  `,
+                  iconSize: [100, 34],
+                  iconAnchor: [50, 34]
+                })}
+              />
+            )}
 
             {properties.map((prop) => (
               <Marker
                 key={prop.id}
                 position={[prop.lat, prop.lng]}
-                icon={createCustomIcon(prop.status, prop.remaxExclusivo, prop.precoM2)}
+                icon={createCustomIcon(prop.status, prop.remaxExclusivo, prop.precoM2, prop.portal)}
                 eventHandlers={{
                   click: () => setActiveProperty(prop)
                 }}
@@ -256,9 +315,9 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
                     <div className="relative h-32 rounded-lg overflow-hidden mb-2">
                       <img src={prop.imagem} alt={prop.title} className="w-full h-full object-cover" />
                       <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded text-white ${
-                        prop.status === 'vendido' ? 'bg-emerald-600' : prop.remaxExclusivo ? 'bg-remax-red' : 'bg-blue-600'
+                        prop.portal === 'QuintoAndar' ? 'bg-purple-600' : prop.status === 'vendido' ? 'bg-emerald-600' : prop.remaxExclusivo ? 'bg-remax-red' : 'bg-blue-600'
                       }`}>
-                        {prop.status === 'vendido' ? 'IMÓVEL VENDIDO' : prop.portal}
+                        {prop.portal}
                       </span>
                     </div>
 
@@ -274,12 +333,6 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
                         <span className="text-[10px] text-slate-400">Preço por m²:</span>
                         <span className="text-xs font-bold text-remax-accent">R$ {prop.precoM2.toLocaleString('pt-BR')}/m²</span>
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-1 text-[10px] text-slate-300 text-center mb-3 bg-slate-800/40 py-1.5 rounded">
-                      <div><strong className="block text-white">{prop.area}m²</strong> Área</div>
-                      <div><strong className="block text-white">{prop.quartos}</strong> Quartos</div>
-                      <div><strong className="block text-white">{prop.vagas}</strong> Vagas</div>
                     </div>
 
                     <button
