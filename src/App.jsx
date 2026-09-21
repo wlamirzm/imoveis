@@ -11,7 +11,8 @@ import { initialProperties } from './data/mockProperties';
 import { runScraperJob } from './services/scraperService';
 import { fetchPropertiesFromSupabase, savePropertyToSupabase } from './lib/supabaseClient';
 import { generateQuintoAndarListingsInRadius, calculateHaversineDistanceMeters } from './services/quintoAndarService';
-import { Bot, CheckCircle2, Database } from 'lucide-react';
+import { getDadosUrbanisticosPMSP } from './services/geosampaService';
+import { Bot, CheckCircle2, Database, Landmark, Train } from 'lucide-react';
 
 export default function App() {
   const [properties, setProperties] = useState(initialProperties);
@@ -19,9 +20,10 @@ export default function App() {
   const [selectedBairro, setSelectedBairro] = useState('Todos os Bairros (Zona Sul)');
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
   
-  // Estado da Busca por Raio Geográfico (QuintoAndar + RE/MAX)
+  // Estado da Busca por Raio Geográfico (Unificado para TODOS os Portais + PMSP GeoSampa)
   const [activeRadiusSearch, setActiveRadiusSearch] = useState(null);
   const [quintoAndarListings, setQuintoAndarListings] = useState([]);
+  const [pmspInfoInRadius, setPmspInfoInRadius] = useState(null);
 
   // Imóvel selecionado para a ACM
   const [selectedForCma, setSelectedForCma] = useState(null);
@@ -38,7 +40,7 @@ export default function App() {
   // Estado do Scraper Automatizado
   const [isScraping, setIsScraping] = useState(false);
   const [scraperLogs, setScraperLogs] = useState([
-    'Pipeline Supabase + QuintoAndar + PostGIS conectado. Aguardando disparo de varredura...'
+    'Pipeline Supabase + PostGIS + GeoSampa PMSP ativo. Aguardando disparo de varredura...'
   ]);
   const [toastNotification, setToastNotification] = useState(null);
 
@@ -55,11 +57,11 @@ export default function App() {
     loadSupabaseData();
   }, []);
 
-  // Handler para Busca por Raio Geográfico em torno de um endereço
+  // Handler para Busca por Raio Geográfico Unificada (TODOS os Portais + PMSP GeoSampa)
   const handleApplyRadiusSearch = (searchInfo) => {
     setActiveRadiusSearch(searchInfo);
     
-    // Gerar anúncios do QuintoAndar no raio selecionado
+    // Gerar ofertas do QuintoAndar no raio
     const qaResults = generateQuintoAndarListingsInRadius(
       searchInfo.centerLat,
       searchInfo.centerLng,
@@ -67,14 +69,19 @@ export default function App() {
       "Brooklin"
     );
 
+    // Calcular dados municipais da Prefeitura de SP no ponto central
+    const pmspData = getDadosUrbanisticosPMSP("Brooklin", 1850000);
+    setPmspInfoInRadius(pmspData);
+
     setQuintoAndarListings(qaResults);
-    setToastNotification(`Busca por raio de ${searchInfo.radiusMeters >= 1000 ? `${searchInfo.radiusMeters / 1000}km` : `${searchInfo.radiusMeters}m`} aplicada! ${qaResults.length} ofertas QuintoAndar encontradas.`);
+    setToastNotification(`Filtro por raio de ${searchInfo.radiusMeters >= 1000 ? `${searchInfo.radiusMeters / 1000}km` : `${searchInfo.radiusMeters}m`} aplicado para TODOS os portais + PMSP!`);
     setTimeout(() => setToastNotification(null), 4000);
   };
 
   const handleClearRadiusSearch = () => {
     setActiveRadiusSearch(null);
     setQuintoAndarListings([]);
+    setPmspInfoInRadius(null);
   };
 
   // Handler para disparar a Coleta Automatizada e gravar no Supabase
@@ -115,16 +122,16 @@ export default function App() {
     setSelectedBairro('Todos os Bairros (Zona Sul)');
   };
 
-  // Imóveis consolidados (Base Principal + QuintoAndar no Raio)
+  // Imóveis consolidados (Base Supabase/RE/MAX/ZAP/VivaReal/OLX + QuintoAndar)
   const allPropertiesCombined = useMemo(() => {
     return [...quintoAndarListings, ...properties];
   }, [properties, quintoAndarListings]);
 
-  // Filtragem Dinâmica dos Imóveis (suportando filtro espacial por raio)
+  // Filtragem Dinâmica dos Imóveis (Aplica o raio espacial a TODOS os portais)
   const filteredProperties = useMemo(() => {
     return allPropertiesCombined.filter(prop => {
       
-      // Se busca por raio estiver ativa, filtrar estritamente pela distância Haversine ao ponto central
+      // Se a Busca por Raio estiver ativa, filtrar TODOS os imóveis pela distância geográfica ao centro
       if (activeRadiusSearch) {
         const distMeters = calculateHaversineDistanceMeters(
           activeRadiusSearch.centerLat,
@@ -177,7 +184,7 @@ export default function App() {
     });
   }, [allPropertiesCombined, selectedBairro, filters, activeRadiusSearch]);
 
-  // Preço Médio por m² Global
+  // Preço Médio por m² Global no Raio
   const avgM2Price = useMemo(() => {
     if (filteredProperties.length === 0) return 0;
     const sum = filteredProperties.reduce((acc, p) => acc + p.precoM2, 0);
@@ -226,19 +233,41 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
-        {/* Supabase & QuintoAndar Status Banner */}
-        <div className="bg-[#131F2E] border border-slate-800 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between text-xs gap-2">
-          <div className="flex items-center gap-2">
-            <Database className="w-4 h-4 text-emerald-400" />
-            <span className="text-slate-300 font-medium">Banco de Dados Espacial PostGIS + QuintoAndar:</span>
-            <span className="font-bold text-white font-mono">Supabase PostgreSQL</span>
-          </div>
-          <span className="bg-purple-500/10 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
-            ● QuintoAndar Radius Search Actived
-          </span>
-        </div>
+        {/* Banner de Dados Municipais PMSP GeoSampa Ativos quando houver Busca por Raio */}
+        {activeRadiusSearch && pmspInfoInRadius && (
+          <div className="bg-gradient-to-r from-amber-500/10 via-remax-card to-emerald-500/10 border border-amber-500/30 rounded-xl p-4 flex flex-wrap items-center justify-between text-xs gap-4 shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/20 text-amber-400 rounded-lg">
+                <Landmark className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="font-bold text-white block text-sm">
+                  Dados Oficiais Prefeitura SP (GeoSampa) no Raio de {activeRadiusSearch.radiusMeters >= 1000 ? `${activeRadiusSearch.radiusMeters / 1000}km` : `${activeRadiusSearch.radiusMeters}m`}
+                </span>
+                <span className="text-slate-400">
+                  Endereço Alvo: <strong>{activeRadiusSearch.addressText}</strong>
+                </span>
+              </div>
+            </div>
 
-        {/* Módulo de Busca Espacial por Raio Geográfico (QuintoAndar) */}
+            <div className="flex items-center gap-4">
+              <div className="bg-[#0B131F] px-3 py-1.5 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block text-[10px]">Zoneamento PMSP:</span>
+                <span className="font-bold text-amber-400">{pmspInfoInRadius.zoneamento}</span>
+              </div>
+              <div className="bg-[#0B131F] px-3 py-1.5 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block text-[10px]">Estação Próxima:</span>
+                <span className="font-bold text-emerald-400">{pmspInfoInRadius.metroProximo} ({pmspInfoInRadius.distanciaMetroM}m)</span>
+              </div>
+              <div className="bg-[#0B131F] px-3 py-1.5 rounded-lg border border-slate-800">
+                <span className="text-slate-400 block text-[10px]">Imposto ITBI (3%):</span>
+                <span className="font-bold text-white">R$ {pmspInfoInRadius.itbiEstimado.toLocaleString('pt-BR')}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Módulo de Busca Espacial por Raio Geográfico Unificado */}
         {(activeTab === 'mapa' || activeTab === 'analytics') && (
           <RadiusSearchControl
             onApplyRadiusSearch={handleApplyRadiusSearch}
@@ -293,15 +322,19 @@ export default function App() {
       {/* Footer Profissional RE/MAX */}
       <footer className="bg-[#070D14] border-t border-slate-800 py-4 text-center text-xs text-slate-500 mt-auto">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p>© 2026 RE/MAX Brasil - Busca por Raio QuintoAndar & PostGIS</p>
+          <p>© 2026 RE/MAX Brasil - Raio Geográfico Unificado (Portais + PMSP GeoSampa)</p>
           <div className="flex items-center gap-4 text-slate-400">
+            <span>RE/MAX</span>
+            <span>•</span>
             <span>QuintoAndar</span>
             <span>•</span>
             <span>ZAP</span>
             <span>•</span>
             <span>VivaReal</span>
             <span>•</span>
-            <span>RE/MAX Exclusivos</span>
+            <span>OLX</span>
+            <span>•</span>
+            <span>GeoSampa PMSP</span>
           </div>
         </div>
       </footer>

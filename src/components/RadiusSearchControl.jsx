@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Target, Sliders, X, Sparkles, Navigation } from 'lucide-react';
+import { Search, MapPin, Target, Sliders, X, Sparkles, Navigation, Landmark, Layers } from 'lucide-react';
 import { geocodeAddress } from '../services/quintoAndarService';
 
 export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadiusSearch, isSearching }) {
@@ -33,15 +33,24 @@ export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadius
   return (
     <div className="bg-[#131F2E] border border-slate-800 rounded-xl p-4 shadow-xl mb-6">
       <form onSubmit={handleExecuteSearch} className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Target className="w-4 h-4 text-remax-red animate-pulse" />
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              Busca Espacial por Raio Geográfico (QuintoAndar & RE/MAX)
+              Busca Espacial por Raio Geográfico (Todos os Portais + PMSP GeoSampa)
             </h3>
           </div>
+          
+          <div className="flex items-center gap-2 text-[11px] text-slate-400">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-remax-red"></span> RE/MAX</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500"></span> QuintoAndar</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> ZAP/VivaReal</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span> OLX</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> GeoSampa PMSP</span>
+          </div>
+
           {activeSearchInfo && (
-            <span className="bg-remax-red/20 text-remax-red border border-remax-red/40 text-[10px] px-2 py-0.5 rounded-full font-bold">
+            <span className="bg-remax-red/20 text-remax-red border border-remax-red/40 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
               ● Raio de {activeSearchInfo.radiusMeters >= 1000 ? `${activeSearchInfo.radiusMeters / 1000} km` : `${activeSearchInfo.radiusMeters}m`} Ativo
             </span>
           )}
@@ -54,7 +63,7 @@ export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadius
             <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Digite o endereço alvo (Ex: Rua Padre Antônio José dos Santos, 500)..."
+              placeholder="Digite qualquer endereço (Ex: Av. Engenheiro Luís Carlos Berrini, 1000 ou Rua Morumbi)..."
               value={addressInput}
               onChange={(e) => setAddressInput(e.target.value)}
               className="w-full bg-[#0B131F] border border-slate-700 rounded-lg text-xs text-slate-100 pl-9 pr-4 py-2.5 focus:outline-none focus:border-remax-accent"
@@ -93,7 +102,7 @@ export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadius
             className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-remax-red to-rose-700 hover:from-rose-600 hover:to-remax-red text-white font-bold text-xs rounded-lg shadow-md transition-all cursor-pointer"
           >
             <Search className="w-3.5 h-3.5" />
-            <span>Buscar no Raio QuintoAndar</span>
+            <span>Filtrar Raio (Portais + PMSP)</span>
           </button>
 
           {activeSearchInfo && (
