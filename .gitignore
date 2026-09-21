@@ -17,3 +17,5 @@ dist-isolation
 .env
 .env.*
 !.env.example
+
+.vercel
