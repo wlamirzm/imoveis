@@ -11,12 +11,35 @@ import {
   Tag, 
   ArrowUpRight,
   Sparkles,
-  ExternalLink,
-  CheckCircle2,
-  PhoneCall
+  Layers,
+  CheckCircle2
 } from 'lucide-react';
 
-// Custom Marker Icons for Leaflet
+// Tile Layers 100% Livres & Gratuitos para Leaflet / OpenStreetMap
+const MAP_STYLES = {
+  cartoDark: {
+    name: 'OpenStreetMap (Tema Escuro)',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  },
+  osmStandard: {
+    name: 'OpenStreetMap (Padrão Oficial Livre)',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+  },
+  cartoVoyager: {
+    name: 'OpenStreetMap (Voyager Claro)',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  },
+  esriSatellite: {
+    name: 'Satélite (Esri World Imagery)',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+  }
+};
+
+// Custom Marker Icons para Leaflet
 const createCustomIcon = (status, isRemax, priceM2) => {
   let bgColor = '#0088FF'; // Default Venda Blue
   if (status === 'vendido') bgColor = '#10B981'; // Sold Emerald
@@ -48,7 +71,7 @@ const createCustomIcon = (status, isRemax, priceM2) => {
   });
 };
 
-// Componente para re-centralizar o mapa quando o bairro muda
+// Componente para re-centralizar o mapa quando a região muda
 function MapCenterUpdater({ center }) {
   const map = useMap();
   map.setView(center, map.getZoom());
@@ -57,6 +80,9 @@ function MapCenterUpdater({ center }) {
 
 export default function PropertyMap({ properties, onSelectForCma, selectedBairro }) {
   const [activeProperty, setActiveProperty] = useState(null);
+  const [selectedStyleKey, setSelectedStyleKey] = useState('cartoDark');
+
+  const currentTileStyle = MAP_STYLES[selectedStyleKey];
 
   // Determinar centro do mapa baseado nas propriedades
   const defaultCenter = properties.length > 0 
@@ -72,7 +98,7 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Building2 className="w-4 h-4 text-remax-red" />
-              Imóveis Mapeados
+              Imóveis Mapeados (Leaflet)
             </h3>
             <p className="text-xs text-slate-400">
               {properties.length} imóveis na região {selectedBairro !== 'Todos os Bairros' ? `(${selectedBairro})` : ''}
@@ -168,11 +194,11 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
         </div>
       </div>
 
-      {/* Coluna Direita: Mapa Interativo Leaflet */}
+      {/* Coluna Direita: Mapa Interativo Leaflet (Com Seletor de Camadas Livres) */}
       <div className="lg:col-span-8 bg-[#131F2E] border border-slate-800 rounded-xl overflow-hidden shadow-xl relative flex flex-col">
         
-        {/* Map Header Controls */}
-        <div className="p-3 bg-[#0D1826] border-b border-slate-800 flex items-center justify-between z-10">
+        {/* Map Header Controls com Seletor de Tile Provider Livre */}
+        <div className="p-3 bg-[#0D1826] border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 z-10">
           <div className="flex items-center gap-4 text-xs">
             <span className="flex items-center gap-1.5 text-slate-300">
               <span className="w-2.5 h-2.5 rounded-full bg-remax-red"></span> RE/MAX Exclusivo
@@ -185,9 +211,19 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
             </span>
           </div>
 
-          <span className="text-xs text-slate-400 font-mono">
-            Clique no pino para ver a análise de m²
-          </span>
+          {/* Seletor de Camada de Mapa Livre (OpenStreetMap / Leaflet) */}
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-emerald-400" />
+            <select
+              value={selectedStyleKey}
+              onChange={(e) => setSelectedStyleKey(e.target.value)}
+              className="bg-[#131F2E] border border-slate-700/80 rounded-lg text-xs text-slate-200 px-2.5 py-1.5 focus:outline-none focus:border-remax-accent cursor-pointer"
+            >
+              {Object.entries(MAP_STYLES).map(([key, style]) => (
+                <option key={key} value={key}>{style.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Leaflet Map Canvas */}
@@ -199,8 +235,9 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
             className="w-full h-full"
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              key={selectedStyleKey}
+              attribution={currentTileStyle.attribution}
+              url={currentTileStyle.url}
             />
             
             <MapCenterUpdater center={defaultCenter} />
