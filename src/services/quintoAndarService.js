@@ -88,15 +88,27 @@ export function generateExhaustiveListingsInRadius(centerLat, centerLng, radiusM
   for (let i = 0; i < targetCount; i++) {
     // Distribuição homogênea pelos quadrantes do raio (anel interno, médio e externo)
     const angle = (i / targetCount) * 2 * Math.PI + (Math.random() * 0.3 - 0.15);
-    const distanceFactor = Math.pow(Math.random(), 0.7); // Maior densidade mais perto do endereço alvo
-    const distanceMeters = Math.max(30, Math.round(distanceFactor * radiusMeters));
+    // Garantir que a distância gerada seja estritamente até 92% do raio máximo
+    const distanceFactor = Math.pow(Math.random(), 0.7);
+    const targetDist = Math.max(30, Math.round(distanceFactor * radiusMeters * 0.92));
     
     // Converter distância em graus (~111.000m por grau)
-    const deltaLat = (distanceMeters * Math.cos(angle)) / 111000;
-    const deltaLng = (distanceMeters * Math.sin(angle)) / (111000 * Math.cos(centerLat * (Math.PI / 180)));
+    let deltaLat = (targetDist * Math.cos(angle)) / 111000;
+    let deltaLng = (targetDist * Math.sin(angle)) / (111000 * Math.cos(centerLat * (Math.PI / 180)));
     
-    const propLat = centerLat + deltaLat;
-    const propLng = centerLng + deltaLng;
+    let propLat = centerLat + deltaLat;
+    let propLng = centerLng + deltaLng;
+
+    // Haversine de validação para garantir conformidade estrita de distância
+    let distanceMeters = calculateHaversineDistanceMeters(centerLat, centerLng, propLat, propLng);
+    if (distanceMeters > radiusMeters) {
+      const scale = (radiusMeters * 0.90) / distanceMeters;
+      deltaLat *= scale;
+      deltaLng *= scale;
+      propLat = centerLat + deltaLat;
+      propLng = centerLng + deltaLng;
+      distanceMeters = calculateHaversineDistanceMeters(centerLat, centerLng, propLat, propLng);
+    }
     
     const area = Math.floor(Math.random() * (260 - 45) + 45);
     const precoM2 = Math.floor(9500 + Math.random() * 8500);

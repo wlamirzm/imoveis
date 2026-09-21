@@ -67,12 +67,23 @@ export default function App() {
   const handleApplyRadiusSearch = async (searchInfo) => {
     setActiveRadiusSearch(searchInfo);
     
-    // Gerar ofertas do QuintoAndar no raio
+    // Extrair o nome do bairro do endereço procurado para titulação adequada
+    let detectedBairro = "Brooklin";
+    const textLower = (searchInfo.addressText + " " + (searchInfo.displayName || "")).toLowerCase();
+    if (textLower.includes("moema")) detectedBairro = "Moema";
+    else if (textLower.includes("morumbi")) detectedBairro = "Morumbi";
+    else if (textLower.includes("campo belo")) detectedBairro = "Campo Belo";
+    else if (textLower.includes("vila mariana")) detectedBairro = "Vila Mariana";
+    else if (textLower.includes("itaim")) detectedBairro = "Itaim Bibi";
+    else if (textLower.includes("santo amaro")) detectedBairro = "Santo Amaro";
+    else if (textLower.includes("vila nova concei")) detectedBairro = "Vila Nova Conceição";
+
+    // Gerar ofertas dos portais no raio exato
     const qaResults = generateQuintoAndarListingsInRadius(
       searchInfo.centerLat,
       searchInfo.centerLng,
       searchInfo.radiusMeters,
-      "Brooklin"
+      detectedBairro
     );
 
     // Buscar transações de ITBI no raio geográfico
@@ -84,11 +95,11 @@ export default function App() {
     setItbiList(fetchedItbi);
 
     // Calcular dados municipais da Prefeitura de SP no ponto central
-    const pmspData = getDadosUrbanisticosPMSP("Brooklin", 1850000);
+    const pmspData = getDadosUrbanisticosPMSP(detectedBairro, 1850000);
     setPmspInfoInRadius(pmspData);
 
     setQuintoAndarListings(qaResults);
-    setToastNotification(`Filtro por raio de ${searchInfo.radiusMeters >= 1000 ? `${searchInfo.radiusMeters / 1000}km` : `${searchInfo.radiusMeters}m`} aplicado para TODOS os portais + PMSP ITBI!`);
+    setToastNotification(`Filtro de ${searchInfo.radiusMeters >= 1000 ? `${searchInfo.radiusMeters / 1000}km` : `${searchInfo.radiusMeters}m`} aplicado estritamente ao raio de ${searchInfo.addressText}!`);
     setTimeout(() => setToastNotification(null), 4000);
   };
 

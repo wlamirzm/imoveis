@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Target, Sliders, X, Sparkles, Navigation, Landmark, Layers } from 'lucide-react';
+import { Search, MapPin, Target, X } from 'lucide-react';
 import { geocodeAddress } from '../services/quintoAndarService';
 
 export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadiusSearch, isSearching }) {
@@ -7,21 +7,32 @@ export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadius
   const [selectedRadiusMeters, setSelectedRadiusMeters] = useState(1000); // 1km default
   const [activeSearchInfo, setActiveSearchInfo] = useState(null);
 
-  const handleExecuteSearch = async (e) => {
-    e.preventDefault();
-    if (!addressInput.trim()) return;
+  const executeSearch = async (address, radius) => {
+    if (!address.trim()) return;
 
-    const coords = await geocodeAddress(addressInput);
+    const coords = await geocodeAddress(address);
     const searchInfo = {
-      addressText: addressInput,
+      addressText: address,
       displayName: coords.displayName,
       centerLat: coords.lat,
       centerLng: coords.lng,
-      radiusMeters: selectedRadiusMeters
+      radiusMeters: radius
     };
 
     setActiveSearchInfo(searchInfo);
     onApplyRadiusSearch(searchInfo);
+  };
+
+  const handleExecuteSearch = (e) => {
+    e.preventDefault();
+    executeSearch(addressInput, selectedRadiusMeters);
+  };
+
+  const handleRadiusChange = (newRadiusMeters) => {
+    setSelectedRadiusMeters(newRadiusMeters);
+    if (addressInput.trim()) {
+      executeSearch(addressInput, newRadiusMeters);
+    }
   };
 
   const handleClear = () => {
@@ -83,7 +94,7 @@ export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadius
               <button
                 key={r.val}
                 type="button"
-                onClick={() => setSelectedRadiusMeters(r.val)}
+                onClick={() => handleRadiusChange(r.val)}
                 className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${
                   selectedRadiusMeters === r.val
                     ? 'bg-remax-red text-white shadow'
