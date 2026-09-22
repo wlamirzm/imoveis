@@ -82,15 +82,21 @@ export async function fetchPropertiesFromSupabase() {
     const { data, error } = await supabase
       .from('properties')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('data_ultima_captura', { ascending: false, nullsFirst: false });
 
     if (error) {
       console.warn("Erro ao buscar no Supabase:", error.message);
-      return null;
+      return [];
     }
+
+    if (!data) return [];
 
     return data.map(item => {
       const coords = sanitizeCoords(item.latitude, item.longitude, item.bairro);
+      const areaVal = Number(item.area) || 1;
+      const precoVal = Number(item.preco) || 0;
+      const precoM2Val = Number(item.preco_m2) || Math.round(precoVal / areaVal);
+
       return {
         id: item.id,
         code: item.code,
@@ -101,32 +107,32 @@ export async function fetchPropertiesFromSupabase() {
         zona: item.zona,
         endereco: sanitizeAddress(item.endereco, item.bairro, item.code),
         tipo: item.tipo,
-        preco: Number(item.preco),
-        area: Number(item.area),
-        precoM2: Number(item.preco_m2),
-        quartos: item.quartos,
-        suites: item.suites,
-        vagas: item.vagas,
-        banheiros: item.banheiros,
-        condominio: Number(item.condominio),
-        iptu: Number(item.iptu),
-        status: item.status,
-        portal: item.portal,
-        remaxExclusivo: item.remax_exclusivo,
-        diasNoMercado: item.dias_no_mercado,
-        dataAnuncio: item.data_anuncio,
-        dataUltimaCaptura: item.data_ultima_captura || item.data_anuncio,
+        preco: precoVal,
+        area: areaVal,
+        precoM2: precoM2Val,
+        quartos: item.quartos || 1,
+        suites: item.suites || 0,
+        vagas: item.vagas || 0,
+        banheiros: item.banheiros || 1,
+        condominio: Number(item.condominio) || 0,
+        iptu: Number(item.iptu) || 0,
+        status: item.status || 'venda',
+        portal: item.portal || 'Portal Imobiliário',
+        remaxExclusivo: item.remax_exclusivo || false,
+        diasNoMercado: item.dias_no_mercado || 1,
+        dataAnuncio: item.data_anuncio || new Date().toISOString().split('T')[0],
+        dataUltimaCaptura: item.data_ultima_captura || item.data_anuncio || new Date().toISOString().split('T')[0],
         dataVenda: item.data_venda,
         lat: coords.lat,
         lng: coords.lng,
-        imagem: item.image_url,
-        corretor: item.corretor,
-        contato: item.contato
+        imagem: item.image_url || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
+        corretor: item.corretor || 'Captação Real',
+        contato: item.contato || '(11) 98000-1234'
       };
     });
   } catch (err) {
     console.warn("Falha na consulta Supabase:", err);
-    return null;
+    return [];
   }
 }
 
@@ -135,6 +141,9 @@ export async function fetchPropertiesFromSupabase() {
  */
 export async function savePropertyToSupabase(property) {
   try {
+    const today = new Date().toISOString().split('T')[0];
+    const precoM2 = property.precoM2 || (property.area ? Math.round(property.preco / property.area) : null);
+
     const { data, error } = await supabase
       .from('properties')
       .upsert({
@@ -148,6 +157,7 @@ export async function savePropertyToSupabase(property) {
         tipo: property.tipo,
         preco: property.preco,
         area: property.area,
+        preco_m2: precoM2,
         quartos: property.quartos,
         suites: property.suites,
         vagas: property.vagas,
@@ -158,8 +168,8 @@ export async function savePropertyToSupabase(property) {
         portal: property.portal,
         remax_exclusivo: property.remaxExclusivo,
         dias_no_mercado: property.diasNoMercado,
-        data_anuncio: property.dataAnuncio,
-        data_ultima_captura: property.dataUltimaCaptura || new Date().toISOString().split('T')[0],
+        data_anuncio: property.dataAnuncio || today,
+        data_ultima_captura: property.dataUltimaCaptura || today,
         latitude: property.lat,
         longitude: property.lng,
         image_url: property.imagem,

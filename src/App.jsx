@@ -17,7 +17,7 @@ import { ITBIAnalyticsPanel } from './components/ITBIAnalyticsPanel';
 import { CheckCircle2, Landmark } from 'lucide-react';
 
 export default function App() {
-  const [properties, setProperties] = useState(initialProperties);
+  const [properties, setProperties] = useState([]);
   const [activeTab, setActiveTab] = useState('mapa'); // 'mapa' | 'analytics' | 'acm' | 'scraper'
   const [selectedBairro, setSelectedBairro] = useState('Todos os Bairros (Zona Sul)');
   
@@ -50,7 +50,7 @@ export default function App() {
 
   // Handler para Busca por Raio Geográfico Unificada (TODOS os Portais + PMSP GeoSampa + ITBI)
   const handleApplyRadiusSearch = (searchInfo, timeframeMonths = itbiTimeframeMonths) => {
-    // 1. Atualizar instantaneamente o mapa, raio e ofertas (0 ms de resposta)
+    // 1. Atualizar instantaneamente o mapa e raio
     setActiveRadiusSearch(searchInfo);
     
     // Extrair o nome do bairro do endereço procurado para titulação adequada
@@ -74,15 +74,6 @@ export default function App() {
     } else if (textLower.includes("vila nova concei") || textLower.includes("milão")) {
       detectedBairro = "Vila Nova Conceição";
     }
-
-    // Gerar ofertas dos portais no raio exato instantaneamente
-    const qaResults = generateQuintoAndarListingsInRadius(
-      searchInfo.centerLat,
-      searchInfo.centerLng,
-      searchInfo.radiusMeters,
-      detectedBairro
-    );
-    setQuintoAndarListings(qaResults);
 
     // Calcular dados municipais da Prefeitura de SP no ponto central
     const pmspData = getDadosUrbanisticosPMSP(detectedBairro, 1850000);
@@ -108,10 +99,8 @@ export default function App() {
   useEffect(() => {
     async function loadSupabaseData() {
       const dbProperties = await fetchPropertiesFromSupabase();
-      if (dbProperties && dbProperties.length > 0) {
-        setProperties(dbProperties);
-        setScraperLogs(prev => [...prev, `✅ Conectado ao Supabase PostgreSQL (${dbProperties.length} imóveis na tabela 'properties')`]);
-      }
+      setProperties(dbProperties || []);
+      setScraperLogs(prev => [...prev, `✅ Conectado ao Supabase PostgreSQL (${(dbProperties || []).length} imóveis na tabela 'properties')`]);
       
       // Aplicar busca inicial focada no endereço padrão
       handleApplyRadiusSearch({
@@ -140,7 +129,7 @@ export default function App() {
     setItbiList(defaultItbi);
   };
 
-  // Handler para disparar a Coleta Automatizada e gravar no Supabase (Preserva registros antigos)
+  // Handler para disparar a Coleta Automatizada e gravar no Supabase (Preserva registros antigos com upsert incremental)
   const handleTriggerScrape = async (targetBairroParam) => {
     const bairroToScrape = (targetBairroParam && !targetBairroParam.includes('Todos os Bairros'))
       ? targetBairroParam
@@ -161,32 +150,9 @@ export default function App() {
       await savePropertyToSupabase(propWithDate);
     }
 
-    // Mesclar sem apagar registros antigos: atualiza dataUltimaCaptura nos re-encontrados e preserva os anteriores
-    setProperties(prev => {
-      const updatedList = [...prev];
-      const codeIndexMap = new Map(updatedList.map((p, idx) => [p.code || p.id, idx]));
-
-      for (const item of newProperties) {
-        const itemKey = item.code || item.id;
-        const existingIdx = codeIndexMap.get(itemKey);
-        if (existingIdx !== undefined) {
-          // Atualiza imóvel re-encontrado mantendo histórico e renovando dataUltimaCaptura para hoje
-          updatedList[existingIdx] = {
-            ...updatedList[existingIdx],
-            ...item,
-            dataUltimaCaptura: todayStr,
-            dataAnuncio: updatedList[existingIdx].dataAnuncio || item.dataAnuncio
-          };
-        } else {
-          // Adiciona novo imóvel encontrado com tag de hoje
-          updatedList.unshift({
-            ...item,
-            dataUltimaCaptura: todayStr
-          });
-        }
-      }
-      return updatedList;
-    });
+    // Recarregar lista incremental do Supabase após ingestão
+    const updatedProperties = await fetchPropertiesFromSupabase();
+    setProperties(updatedProperties || []);
 
     setIsScraping(false);
     

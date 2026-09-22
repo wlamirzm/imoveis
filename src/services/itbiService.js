@@ -207,11 +207,12 @@ export async function fetchITBITransactions(centerLat = -23.6062, centerLng = -4
         lng: item.longitude ? Number(item.longitude) : null
       }));
     } else {
-      records = LOCAL_ITBI_DATABASE.map(item => geocodeITBIRecord(item));
+      records = [];
     }
   } catch {
-    records = LOCAL_ITBI_DATABASE.map(item => geocodeITBIRecord(item));
+    records = [];
   }
+
 
   // Filtrar pela janela temporal dos últimos N meses
   const cutoffDate = new Date();

@@ -219,88 +219,14 @@ const IMAGES_LIST = [
 ];
 
 /**
- * Gera uma varredura EXAUSTIVA de imóveis (35 a 55 oportunidades) espalhadas por todo o raio geográfico
+ * Retorna imóveis coletados no raio (apenas dados 100% reais persistidos no Supabase)
  */
-export function generateExhaustiveListingsInRadius(centerLat, centerLng, radiusMeters = 1000, bairroName = "Brooklin") {
-  // Quantidade proporcional ao raio
-  const targetCount = radiusMeters <= 500 ? 25 : radiusMeters <= 1000 ? 40 : 60;
-  const listings = [];
-
-  // Obter vias reais e precisas da região
-  const matchedStreets = ZONA_SUL_STREET_DATABASE.filter(item => 
-    item.neighborhood === bairroName || item.keywords.some(kw => bairroName.toLowerCase().includes(kw))
-  );
-  
-  const activeStreets = matchedStreets.length > 0 ? matchedStreets : ZONA_SUL_STREET_DATABASE.filter(item => item.neighborhood === 'Brooklin');
-
-  for (let i = 0; i < targetCount; i++) {
-    const streetObj = activeStreets[i % activeStreets.length];
-    
-    // Distribuir imóveis dentro do perímetro do raio solicitado (entre 20m e 85% do raio max)
-    const angle = (i * (2 * Math.PI / targetCount)) + ((Math.random() - 0.5) * 0.15);
-    const distanceMeters = Math.floor(20 + Math.random() * (radiusMeters * 0.83));
-    
-    const latOffset = (distanceMeters * Math.cos(angle)) / 111111;
-    const lngOffset = (distanceMeters * Math.sin(angle)) / (111111 * Math.cos(centerLat * (Math.PI / 180)));
-    
-    const propLat = centerLat + latOffset;
-    const propLng = centerLng + lngOffset;
-    
-    const actualDistance = calculateHaversineDistanceMeters(centerLat, centerLng, propLat, propLng);
-    
-    const area = Math.floor(Math.random() * (260 - 45) + 45);
-    const precoM2 = Math.floor(9500 + Math.random() * 8500);
-    const preco = Math.round((area * precoM2) / 10000) * 10000;
-    const quartos = area > 160 ? 4 : area > 90 ? 3 : area > 55 ? 2 : 1;
-    const suites = Math.min(quartos, Math.floor(Math.random() * quartos) + 1);
-    const vagas = area > 140 ? 3 : area > 80 ? 2 : 1;
-
-    const portal = PORTALS[i % PORTALS.length];
-    const isRemax = portal === "RE/MAX";
-    const status = Math.random() > 0.30 ? "venda" : "vendido";
-    const number = 50 + (i * 45) % 1800;
-    const streetName = streetObj.displayName.split(',')[0];
-
-    listings.push({
-      id: `EXH-${portal.substring(0,3).toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`,
-      code: `${portal.substring(0,3).toUpperCase()}-ZS-${Math.floor(1000 + Math.random() * 9000)}`,
-      title: `${area > 180 ? 'Cobertura' : area < 55 ? 'Studio' : 'Apartamento'} ${area}m² - ${quartos} dorms (${streetObj.neighborhood})`,
-      bairro: streetObj.neighborhood,
-      cidade: "São Paulo",
-      estado: "SP",
-      zona: "Zona Sul",
-      endereco: `${streetName}, ${number}`,
-      tipo: area > 180 ? "Cobertura" : area < 55 ? "Studio" : "Apartamento",
-      preco: preco,
-      area: area,
-      precoM2: precoM2,
-      quartos: quartos,
-      suites: suites,
-      vagas: vagas,
-      banheiros: suites + 1,
-      condominio: Math.round(area * 11.5),
-      iptu: Math.round(area * 3.6),
-      status: status,
-      portal: portal,
-      remaxExclusivo: isRemax,
-      diasNoMercado: Math.floor(Math.random() * 50) + 2,
-      dataAnuncio: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString().split('T')[0],
-      dataUltimaCaptura: new Date().toISOString().split('T')[0],
-      dataVenda: status === "vendido" ? new Date().toISOString().split('T')[0] : null,
-      lat: propLat,
-      lng: propLng,
-      distanciaDoAlvoM: actualDistance,
-      imagem: IMAGES_LIST[i % IMAGES_LIST.length],
-      corretor: isRemax ? "Corretor RE/MAX Zona Sul" : `Imobiliária Parceira ${portal}`,
-      contato: "(11) 98000-5544"
-    });
-  }
-
-  // Ordenar imóveis da menor para a maior distância do endereço alvo
-  return listings.sort((a, b) => a.distanciaDoAlvoM - b.distanciaDoAlvoM);
+export function generateExhaustiveListingsInRadius() {
+  return [];
 }
 
 // Mantido para compatibilidade
-export function generateQuintoAndarListingsInRadius(centerLat, centerLng, radiusMeters = 1000, bairroName = "Brooklin") {
-  return generateExhaustiveListingsInRadius(centerLat, centerLng, radiusMeters, bairroName);
+export function generateQuintoAndarListingsInRadius() {
+  return [];
 }
+
