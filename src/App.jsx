@@ -72,7 +72,8 @@ export default function App() {
   const [itbiTimeframeMonths, setItbiTimeframeMonths] = useState(24); // 24 Meses default
 
   // Handler para Busca por Raio Geográfico Unificada (TODOS os Portais + PMSP GeoSampa + ITBI)
-  const handleApplyRadiusSearch = async (searchInfo, timeframeMonths = itbiTimeframeMonths) => {
+  const handleApplyRadiusSearch = (searchInfo, timeframeMonths = itbiTimeframeMonths) => {
+    // 1. Atualizar instantaneamente o mapa, raio e ofertas (0 ms de resposta)
     setActiveRadiusSearch(searchInfo);
     
     // Extrair o nome do bairro do endereço procurado para titulação adequada
@@ -97,30 +98,33 @@ export default function App() {
       detectedBairro = "Vila Nova Conceição";
     }
 
-    // Gerar ofertas dos portais no raio exato
+    // Gerar ofertas dos portais no raio exato instantaneamente
     const qaResults = generateQuintoAndarListingsInRadius(
       searchInfo.centerLat,
       searchInfo.centerLng,
       searchInfo.radiusMeters,
       detectedBairro
     );
-
-    // Buscar transações de ITBI no raio geográfico nos últimos N meses (default: 24 meses)
-    const fetchedItbi = await fetchITBITransactions(
-      searchInfo.centerLat,
-      searchInfo.centerLng,
-      searchInfo.radiusMeters,
-      timeframeMonths
-    );
-    setItbiList(fetchedItbi);
+    setQuintoAndarListings(qaResults);
 
     // Calcular dados municipais da Prefeitura de SP no ponto central
     const pmspData = getDadosUrbanisticosPMSP(detectedBairro, 1850000);
     setPmspInfoInRadius(pmspData);
 
-    setQuintoAndarListings(qaResults);
     setToastNotification(`Filtro de ${searchInfo.radiusMeters >= 1000 ? `${searchInfo.radiusMeters / 1000}km` : `${searchInfo.radiusMeters}m`} aplicado estritamente ao raio de ${searchInfo.addressText}!`);
     setTimeout(() => setToastNotification(null), 4000);
+
+    // 2. Buscar transações de ITBI no raio de forma assíncrona / não bloqueante
+    fetchITBITransactions(
+      searchInfo.centerLat,
+      searchInfo.centerLng,
+      searchInfo.radiusMeters,
+      timeframeMonths
+    ).then(fetchedItbi => {
+      setItbiList(fetchedItbi);
+    }).catch(err => {
+      console.warn("Aviso ao carregar ITBI assíncrono:", err);
+    });
   };
 
   const handleITBITimeframeChange = (months) => {

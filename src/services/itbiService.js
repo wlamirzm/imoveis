@@ -60,10 +60,16 @@ export async function fetchITBITransactions(centerLat = -23.6062, centerLng = -4
     cutoffDate.setMonth(cutoffDate.getMonth() - timeframeMonths);
     const cutoffString = cutoffDate.toISOString().split('T')[0];
 
-    const { data, error } = await supabase
+    const supabasePromise = supabase
       .from('itbi_transactions')
       .select('*')
       .gte('data_arrecadacao', cutoffString);
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout Supabase ITBI')), 1200)
+    );
+
+    const { data, error } = await Promise.race([supabasePromise, timeoutPromise]);
 
     if (!error && data && data.length > 0) {
       records = data.map(item => ({
