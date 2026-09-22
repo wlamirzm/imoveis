@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Target, X, Building, Navigation } from 'lucide-react';
+import { Search, MapPin, Target, X } from 'lucide-react';
 import { geocodeAddress } from '../services/quintoAndarService';
 
 // Base de sugestões de endereços populares e de alta demanda na Zona Sul de SP (com coordenadas exatas)
@@ -17,6 +17,7 @@ const POPULAR_ZONA_SUL_ADDRESSES = [
   { text: 'Av. Giovanni Gronchi, 6000', bairro: 'Portal do Morumbi', desc: 'Portal do Morumbi, SP', lat: -23.6140, lng: -46.7240 },
   { text: 'Rua Dr. Pedro de Melo, 180', bairro: 'Morumbi', desc: 'Vila Andrade / Morumbi, SP', lat: -23.6210, lng: -46.7340 },
   { text: 'Rua Deputado Laércio Corte, 1200', bairro: 'Morumbi', desc: 'Panamby / Morumbi, SP', lat: -23.6270, lng: -46.7220 },
+  { text: 'Av. Jorge João Saad, 50', bairro: 'Morumbi', desc: 'Próximo ao Estádio do Morumbi, São Paulo - SP', lat: -23.5995, lng: -46.7170 },
   { text: 'Rua Engenheiro Oscar Americano, 850', bairro: 'Morumbi', desc: 'Alto do Morumbi, SP', lat: -23.5975, lng: -46.7050 },
   { text: 'Rua Pascal, 1200', bairro: 'Campo Belo', desc: 'Campo Belo, SP', lat: -23.6180, lng: -46.6710 },
   { text: 'Rua Vieira de Morais, 640', bairro: 'Campo Belo', desc: 'Eixo Comercial Campo Belo, SP', lat: -23.6160, lng: -46.6740 },
@@ -26,7 +27,17 @@ const POPULAR_ZONA_SUL_ADDRESSES = [
   { text: 'Rua Joaquim Floriano, 800', bairro: 'Itaim Bibi', desc: 'Itaim Bibi, SP', lat: -23.5840, lng: -46.6730 },
   { text: 'Av. Adolfo Pinheiro, 900', bairro: 'Santo Amaro', desc: 'Metrô Adolfo Pinheiro, SP', lat: -23.6520, lng: -46.7040 },
   { text: 'Rua Alexandre Dumas, 1500', bairro: 'Chácara Santo Antônio', desc: 'Chácara Santo Antônio, SP', lat: -23.6260, lng: -46.7020 },
-  { text: 'Rua Praça Cidade de Milão, 100', bairro: 'Vila Nova Conceição', desc: 'Próximo ao Parque Ibirapuera, SP', lat: -23.5930, lng: -46.6670 }
+  { text: 'Rua Praça Cidade de Milão, 100', bairro: 'Vila Nova Conceição', desc: 'Próximo ao Parque Ibirapuera, SP', lat: -23.5930, lng: -46.6670 },
+  { text: 'Av. Vital Brasil, 850', bairro: 'Butantã', desc: 'Próximo ao Metrô Butantã e USP, SP', lat: -23.5718, lng: -46.7082 },
+  { text: 'Rua Corinto, 310', bairro: 'Butantã', desc: 'Butantã / Cidade Universitária, SP', lat: -23.5730, lng: -46.7110 },
+  { text: 'Rua dos Pinheiros, 700', bairro: 'Pinheiros', desc: 'Polo Gastronômico Pinheiros, SP', lat: -23.5670, lng: -46.6920 },
+  { text: 'Av. Pedroso de Moraes, 1200', bairro: 'Pinheiros', desc: 'Pinheiros, SP', lat: -23.5630, lng: -46.6950 },
+  { text: 'Rua Harmonia, 450', bairro: 'Vila Madalena', desc: 'Vila Madalena / Beco do Batman, SP', lat: -23.5535, lng: -46.6912 },
+  { text: 'Rua Desembargador do Vale, 620', bairro: 'Perdizes', desc: 'Perdizes, SP', lat: -23.5350, lng: -46.6715 },
+  { text: 'Rua Turiassu, 1100', bairro: 'Perdizes', desc: 'Próximo Allianz Parque / Perdizes, SP', lat: -23.5330, lng: -46.6740 },
+  { text: 'Av. Prof. Fonseca Rodrigues, 1000', bairro: 'Alto de Pinheiros', desc: 'Próximo Parque Villa-Lobos, SP', lat: -23.5510, lng: -46.7110 },
+  { text: 'Rua Carlos Weber, 800', bairro: 'Vila Leopoldina', desc: 'Vila Leopoldina, SP', lat: -23.5280, lng: -46.7250 },
+  { text: 'Rua Clélia, 1500', bairro: 'Lapa', desc: 'Lapa / SESC Pompéia, SP', lat: -23.5220, lng: -46.7010 }
 ];
 
 export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadiusSearch, isSearching }) {

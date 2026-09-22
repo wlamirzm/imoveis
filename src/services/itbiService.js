@@ -1,3 +1,5 @@
+import { supabase } from '../lib/supabaseClient';
+
 /**
  * Normaliza abreviações e variações de nomes de ruas do ITBI da Prefeitura de SP
  * Ex: "R. GUILHERME DUMONT VILLARES" -> "rua guilherme dumont villares"
@@ -31,6 +33,8 @@ const ITBI_STREET_COORDINATE_MAP = [
   { keywords: ['morumbi'], lat: -23.6050, lng: -46.7100, bairro: 'Morumbi' },
   { keywords: ['pedro de melo'], lat: -23.6210, lng: -46.7340, bairro: 'Morumbi' },
   { keywords: ['laercio corte'], lat: -23.6270, lng: -46.7220, bairro: 'Morumbi' },
+  { keywords: ['jorge joao saad', 'jorge joao', 'jorge saad', 'joao saad'], lat: -23.5995, lng: -46.7170, bairro: 'Morumbi' },
+  { keywords: ['clovis de oliveira'], lat: -23.5982, lng: -46.7160, bairro: 'Morumbi' },
   { keywords: ['jose janis'], lat: -23.6190, lng: -46.7320, bairro: 'Portal do Morumbi' },
   { keywords: ['padre antonio', 'antonio jose dos santos'], lat: -23.6080, lng: -46.6940, bairro: 'Brooklin' },
   { keywords: ['berrini', 'luis carlos berrini'], lat: -23.6020, lng: -46.6960, bairro: 'Brooklin' },
@@ -51,7 +55,18 @@ const ITBI_STREET_COORDINATE_MAP = [
   { keywords: ['joaquim floriano'], lat: -23.5840, lng: -46.6730, bairro: 'Itaim Bibi' },
   { keywords: ['adolfo pinheiro'], lat: -23.6520, lng: -46.7040, bairro: 'Santo Amaro' },
   { keywords: ['alexandre dumas'], lat: -23.6260, lng: -46.7020, bairro: 'Chácara Santo Antônio' },
-  { keywords: ['cidade de milao'], lat: -23.5930, lng: -46.6670, bairro: 'Vila Nova Conceição' }
+  { keywords: ['cidade de milao'], lat: -23.5930, lng: -46.6670, bairro: 'Vila Nova Conceição' },
+
+  // Zona Oeste
+  { keywords: ['vital brasil'], lat: -23.5710, lng: -46.7080, bairro: 'Butantã' },
+  { keywords: ['corinto'], lat: -23.5750, lng: -46.7150, bairro: 'Butantã' },
+  { keywords: ['butanta', 'butanta'], lat: -23.5710, lng: -46.7080, bairro: 'Butantã' },
+  { keywords: ['dos pinheiros'], lat: -23.5650, lng: -46.6870, bairro: 'Pinheiros' },
+  { keywords: ['pedroso de moraes'], lat: -23.5610, lng: -46.6910, bairro: 'Pinheiros' },
+  { keywords: ['pinheiros'], lat: -23.5650, lng: -46.6870, bairro: 'Pinheiros' },
+  { keywords: ['harmonia'], lat: -23.5550, lng: -46.6900, bairro: 'Vila Madalena' },
+  { keywords: ['desembargador do vale'], lat: -23.5350, lng: -46.6780, bairro: 'Perdizes' },
+  { keywords: ['carlos weber'], lat: -23.5280, lng: -46.7260, bairro: 'Vila Leopoldina' }
 ];
 
 /**
@@ -73,15 +88,8 @@ export function geocodeITBIRecord(item) {
   const isGeneric = !lat || !lng || (Math.abs(Number(lat) - (-23.6062)) < 0.001 && Math.abs(Number(lng) - (-46.6948)) < 0.001);
 
   if (matched && (isGeneric || !lat || !lng)) {
-    const num = parseInt(item.numero || '0', 10);
-    let latOffset = 0;
-    let lngOffset = 0;
-    if (num > 0) {
-      latOffset = ((num % 100) / 100 - 0.5) * 0.0015;
-      lngOffset = (((num * 3) % 100) / 100 - 0.5) * 0.0015;
-    }
-    lat = matched.lat + latOffset;
-    lng = matched.lng + lngOffset;
+    lat = matched.lat;
+    lng = matched.lng;
   }
 
   return {
@@ -92,7 +100,7 @@ export function geocodeITBIRecord(item) {
   };
 }
 
-// Base de dados local complementar de transações de ITBI na Zona Sul de SP (PMSP) abrangendo 24 meses (2024 - 2026)
+// Base de dados local complementar de transações de ITBI em SP (PMSP) abrangendo 24 meses (2024 - 2026)
 const LOCAL_ITBI_DATABASE = [
   // Brooklin (24 Meses)
   { id: 'itbi-b1', sql: '045.112.0019-1', logradouro: 'Av. Eng. Luís Carlos Berrini', numero: '1050', bairro: 'Brooklin', distrito: 'Itaim Bibi', valorTransacao: 1350000, valorVenal: 980000, valorItbi: 40500, areaM2: 110, precoM2Real: 12272.73, tipo: 'Apartamento', dataArrecadacao: '2026-08-14', lat: -23.6062, lng: -46.6948 },
@@ -116,6 +124,8 @@ const LOCAL_ITBI_DATABASE = [
   { id: 'itbi-mb1', sql: '120.088.0055-1', logradouro: 'Rua Dr. Pedro de Melo', numero: '180', bairro: 'Morumbi', distrito: 'Vila Andrade', valorTransacao: 1150000, valorVenal: 750000, valorItbi: 34500, areaM2: 130, precoM2Real: 8846.15, tipo: 'Apartamento', dataArrecadacao: '2026-07-15', lat: -23.6210, lng: -46.7340 },
   { id: 'itbi-mb2', sql: '120.088.0199-0', logradouro: 'Rua Dep. Laércio Corte', numero: '1200', bairro: 'Morumbi', distrito: 'Vila Andrade', valorTransacao: 2450000, valorVenal: 1600000, valorItbi: 73500, areaM2: 220, precoM2Real: 11136.36, tipo: 'Apartamento', dataArrecadacao: '2025-10-05', lat: -23.6270, lng: -46.7220 },
   { id: 'itbi-mb3', sql: '120.088.0310-4', logradouro: 'Rua Marechal Hastimphilo de Moura', numero: '320', bairro: 'Morumbi', distrito: 'Vila Andrade', valorTransacao: 1250000, valorVenal: 890000, valorItbi: 37500, areaM2: 138, precoM2Real: 9057.97, tipo: 'Apartamento', dataArrecadacao: '2026-06-12', lat: -23.6165, lng: -46.7360 },
+  { id: 'itbi-mb-saad1', sql: '120.088.0500-1', logradouro: 'Av. Jorge João Saad', numero: '50', bairro: 'Morumbi', distrito: 'Morumbi', valorTransacao: 1620000, valorVenal: 1120000, valorItbi: 48600, areaM2: 145, precoM2Real: 11172.41, tipo: 'Apartamento', dataArrecadacao: '2026-08-22', lat: -23.5995, lng: -46.7170 },
+  { id: 'itbi-mb-saad2', sql: '120.088.0522-8', logradouro: 'Av. Jorge João Saad', numero: '320', bairro: 'Morumbi', distrito: 'Morumbi', valorTransacao: 1380000, valorVenal: 950000, valorItbi: 41400, areaM2: 128, precoM2Real: 10781.25, tipo: 'Apartamento', dataArrecadacao: '2026-04-14', lat: -23.6005, lng: -46.7185 },
   { id: 'itbi-mb4', sql: '120.088.0422-1', logradouro: 'Av. Giovanni Gronchi', numero: '6000', bairro: 'Morumbi', distrito: 'Vila Andrade', valorTransacao: 1680000, valorVenal: 1150000, valorItbi: 50400, areaM2: 175, precoM2Real: 9600.00, tipo: 'Apartamento', dataArrecadacao: '2025-11-20', lat: -23.6140, lng: -46.7240 },
 
   // Campo Belo (24 Meses)
@@ -128,7 +138,14 @@ const LOCAL_ITBI_DATABASE = [
 
   // Itaim Bibi (24 Meses)
   { id: 'itbi-it1', sql: '015.022.0101-5', logradouro: 'Rua Clodomiro Amazonas', numero: '500', bairro: 'Itaim Bibi', distrito: 'Itaim Bibi', valorTransacao: 2850000, valorVenal: 1950000, valorItbi: 85500, areaM2: 140, precoM2Real: 20357.14, tipo: 'Apartamento', dataArrecadacao: '2026-08-05', lat: -23.5850, lng: -46.6750 },
-  { id: 'itbi-it2', sql: '015.022.0203-8', logradouro: 'Rua Pedroso Alvarenga', numero: '800', bairro: 'Itaim Bibi', distrito: 'Itaim Bibi', valorTransacao: 3400000, valorVenal: 2300000, valorItbi: 102000, areaM2: 165, precoM2Real: 20606.06, tipo: 'Apartamento', dataArrecadacao: '2026-05-18', lat: -23.5830, lng: -46.6770 }
+  { id: 'itbi-it2', sql: '015.022.0203-8', logradouro: 'Rua Pedroso Alvarenga', numero: '800', bairro: 'Itaim Bibi', distrito: 'Itaim Bibi', valorTransacao: 3400000, valorVenal: 2300000, valorItbi: 102000, areaM2: 165, precoM2Real: 20606.06, tipo: 'Apartamento', dataArrecadacao: '2026-05-18', lat: -23.5830, lng: -46.6770 },
+
+  // Zona Oeste - Butantã, Pinheiros, Vila Madalena, Perdizes (24 Meses)
+  { id: 'itbi-zo1', sql: '085.012.0010-4', logradouro: 'Av. Vital Brasil', numero: '500', bairro: 'Butantã', distrito: 'Butantã', valorTransacao: 780000, valorVenal: 540000, valorItbi: 23400, areaM2: 75, precoM2Real: 10400.00, tipo: 'Apartamento', dataArrecadacao: '2026-08-12', lat: -23.5710, lng: -46.7080 },
+  { id: 'itbi-zo2', sql: '085.012.0088-9', logradouro: 'Rua Corinto', numero: '320', bairro: 'Butantã', distrito: 'Butantã', valorTransacao: 1050000, valorVenal: 720000, valorItbi: 31500, areaM2: 98, precoM2Real: 10714.29, tipo: 'Apartamento', dataArrecadacao: '2026-06-18', lat: -23.5750, lng: -46.7150 },
+  { id: 'itbi-zo3', sql: '013.044.0101-2', logradouro: 'Rua dos Pinheiros', numero: '850', bairro: 'Pinheiros', distrito: 'Pinheiros', valorTransacao: 2100000, valorVenal: 1480000, valorItbi: 63000, areaM2: 125, precoM2Real: 16800.00, tipo: 'Apartamento', dataArrecadacao: '2026-07-28', lat: -23.5650, lng: -46.6870 },
+  { id: 'itbi-zo4', sql: '013.044.0305-6', logradouro: 'Rua Harmonia', numero: '450', bairro: 'Vila Madalena', distrito: 'Pinheiros', valorTransacao: 2850000, valorVenal: 1950000, valorItbi: 85500, areaM2: 185, precoM2Real: 15405.41, tipo: 'Apartamento', dataArrecadacao: '2026-05-14', lat: -23.5550, lng: -46.6900 },
+  { id: 'itbi-zo5', sql: '021.055.0090-1', logradouro: 'Rua Desembargador do Vale', numero: '600', bairro: 'Perdizes', distrito: 'Perdizes', valorTransacao: 1450000, valorVenal: 1020000, valorItbi: 43500, areaM2: 110, precoM2Real: 13181.82, tipo: 'Apartamento', dataArrecadacao: '2026-08-01', lat: -23.5350, lng: -46.6780 }
 ];
 
 /**
@@ -192,7 +209,7 @@ export async function fetchITBITransactions(centerLat = -23.6062, centerLng = -4
     } else {
       records = LOCAL_ITBI_DATABASE.map(item => geocodeITBIRecord(item));
     }
-  } catch (e) {
+  } catch {
     records = LOCAL_ITBI_DATABASE.map(item => geocodeITBIRecord(item));
   }
 

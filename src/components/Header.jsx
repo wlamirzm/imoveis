@@ -6,7 +6,6 @@ import {
   Bot, 
   RefreshCw, 
   Sparkles,
-  Search,
   Building2
 } from 'lucide-react';
 
@@ -20,17 +19,29 @@ export default function Header({
   totalProperties,
   avgM2Price
 }) {
-  const bairrosZonaSul = [
-    "Todos os Bairros (Zona Sul)",
-    "Morumbi",
+  const bairrosDisponiveis = [
+    "Todos os Bairros (Zona Sul + Zona Oeste)",
+    "-- ZONA SUL --",
     "Brooklin",
+    "Morumbi",
+    "Portal do Morumbi",
     "Moema",
     "Campo Belo",
     "Vila Mariana",
     "Itaim Bibi",
     "Chácara Santo Antônio",
     "Santo Amaro",
-    "Vila Nova Conceição"
+    "Vila Nova Conceição",
+    "-- ZONA OESTE --",
+    "Butantã",
+    "Pinheiros",
+    "Vila Madalena",
+    "Perdizes",
+    "Alto de Pinheiros",
+    "Vila Leopoldina",
+    "Lapa",
+    "Pompéia",
+    "Jaguaré"
   ];
 
   return (
@@ -39,22 +50,24 @@ export default function Header({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between py-3 gap-4 border-b border-slate-800/50">
           
-          {/* Logo RE/MAX & System Title */}
+          {/* Logo CONEXPER & System Title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-remax-red to-remax-blue flex items-center justify-center shadow-lg shadow-remax-red/20 font-black text-white text-lg tracking-wider">
-              R/M
-            </div>
+            <img 
+              src="/logoConexper.png" 
+              alt="CONEXPER Logo" 
+              className="w-10 h-10 object-contain rounded-xl bg-slate-900/60 p-1 shadow-lg border border-slate-700/60" 
+            />
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-white tracking-tight">
-                  RE/MAX <span className="text-remax-red">Market</span> Intelligence <span className="text-xs text-slate-400 font-normal">(Zona Sul SP)</span>
+                  CONEXPER <span className="text-remax-red">Market</span> Intelligence <span className="text-xs text-slate-400 font-normal">(Zona Sul & Zona Oeste SP)</span>
                 </h1>
                 <span className="bg-remax-red/10 border border-remax-red/30 text-remax-red text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Sparkles className="w-3 h-3" /> ACM Pro
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Mapeamento Espacial, Coleta Automatizada & Análise Comparativa de Mercado (Morumbi, Brooklin, Moema...)
+                Mapeamento Espacial, Coleta Automatizada & ACM (Brooklin, Morumbi, Butantã, Pinheiros, Perdizes...)
               </p>
             </div>
           </div>
@@ -69,8 +82,8 @@ export default function Header({
                 onChange={(e) => setSelectedBairro(e.target.value)}
                 className="bg-[#131F2E] border border-slate-700/80 rounded-lg text-sm text-slate-200 pl-9 pr-8 py-2 focus:outline-none focus:border-remax-accent focus:ring-1 focus:ring-remax-accent cursor-pointer transition-all"
               >
-                {bairrosZonaSul.map((b) => (
-                  <option key={b} value={b}>{b}</option>
+                {bairrosDisponiveis.map((b) => (
+                  <option key={b} value={b} disabled={b.startsWith('--')}>{b}</option>
                 ))}
               </select>
             </div>
@@ -86,13 +99,13 @@ export default function Header({
               }`}
             >
               <RefreshCw className={`w-4 h-4 ${isScraping ? 'animate-spin' : ''}`} />
-              <span>{isScraping ? 'Coletando Dados...' : 'Coletar Zona Sul'}</span>
+              <span>{isScraping ? 'Coletando Dados...' : 'Coletar Dados (ZS + ZO)'}</span>
             </button>
 
             {/* Quick Stat Pill */}
             <div className="hidden lg:flex items-center gap-3 bg-[#131F2E] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300">
               <div>
-                <span className="text-slate-400 block">Imóveis ZS:</span>
+                <span className="text-slate-400 block">Total Imóveis:</span>
                 <span className="font-bold text-white text-sm">{totalProperties}</span>
               </div>
               <div className="h-6 w-px bg-slate-800" />

@@ -3,37 +3,21 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-le
 import L from 'leaflet';
 import { calculateHaversineDistanceMeters } from '../services/quintoAndarService';
 import { exportPropertiesToExcel } from '../utils/excelExporter';
+import { getCapturaTagInfo } from '../utils/dateUtils';
 import { 
   Building2, 
   MapPin, 
-  Bed, 
-  Bath, 
-  Maximize2, 
-  Calendar, 
-  Tag, 
-  ArrowUpRight,
   Sparkles,
-  Layers,
-  Target,
+  Layers, 
   Download
 } from 'lucide-react';
 
 // Tile Layers 100% Livres & Gratuitos para Leaflet / OpenStreetMap
 const MAP_STYLES = {
-  cartoDark: {
-    name: 'OpenStreetMap (Tema Escuro)',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-  },
   osmStandard: {
     name: 'OpenStreetMap (Padrão Oficial Livre)',
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-  },
-  cartoVoyager: {
-    name: 'OpenStreetMap (Voyager Claro)',
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
   },
   esriSatellite: {
     name: 'Satélite (Esri World Imagery)',
@@ -42,12 +26,23 @@ const MAP_STYLES = {
   }
 };
 
-// Custom Marker Icons para Leaflet (incluindo QuintoAndar Roxo)
-const createCustomIcon = (status, isRemax, priceM2, portal) => {
+const formatPrecoMapTag = (preco) => {
+  if (!preco) return 'R$ --';
+  if (preco >= 1000000) {
+    const val = (preco / 1000000).toFixed(2).replace('.', ',').replace(',00', '');
+    return `R$ ${val}M`;
+  }
+  return `R$ ${Math.round(preco / 1000)}k`;
+};
+
+// Custom Marker Icons para Leaflet (Preço Pedido do Imóvel)
+const createCustomIcon = (status, isRemax, preco, portal) => {
   let bgColor = '#0088FF'; // Default Venda Blue
   if (status === 'vendido') bgColor = '#10B981'; // Sold Emerald
   if (isRemax) bgColor = '#DC1C2D'; // RE/MAX Red
   if (portal === 'QuintoAndar') bgColor = '#7C3AED'; // QuintoAndar Purple
+
+  const priceLabel = formatPrecoMapTag(preco);
 
   return L.divIcon({
     className: 'custom-map-pin',
@@ -57,7 +52,7 @@ const createCustomIcon = (status, isRemax, priceM2, portal) => {
         color: white;
         padding: 4px 8px;
         border-radius: 12px;
-        font-weight: 700;
+        font-weight: 800;
         font-size: 11px;
         border: 2px solid white;
         box-shadow: 0 4px 12px rgba(0,0,0,0.4);
@@ -65,13 +60,14 @@ const createCustomIcon = (status, isRemax, priceM2, portal) => {
         display: flex;
         align-items: center;
         gap: 4px;
-        transform: translate(-50%, -100%);
+        cursor: pointer;
+        user-select: none;
       ">
-        ${portal === 'QuintoAndar' ? '🟣' : isRemax ? '🎈' : '🏠'} R$ ${Math.round(priceM2 / 1000)}k/m²
+        ${portal === 'QuintoAndar' ? '🟣' : isRemax ? '🎈' : '🏠'} ${priceLabel}
       </div>
     `,
-    iconSize: [80, 30],
-    iconAnchor: [40, 30]
+    iconSize: [95, 30],
+    iconAnchor: [47, 30]
   });
 };
 
@@ -92,9 +88,9 @@ function MapCenterUpdater({ center, radiusMeters, focusLocation }) {
   return null;
 }
 
-export default function PropertyMap({ properties, onSelectForCma, selectedBairro, activeRadiusSearch, itbiList = [] }) {
+export default function PropertyMap({ properties, onSelectForCma, activeRadiusSearch, itbiList = [] }) {
   const [activeProperty, setActiveProperty] = useState(null);
-  const [selectedStyleKey, setSelectedStyleKey] = useState('cartoDark');
+  const [selectedStyleKey, setSelectedStyleKey] = useState('osmStandard');
   const [showITBILayer, setShowITBILayer] = useState(true);
 
   const currentTileStyle = MAP_STYLES[selectedStyleKey];
@@ -179,87 +175,97 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
               <p className="text-sm">Nenhum imóvel encontrado dentro do perímetro selecionado.</p>
             </div>
           ) : (
-            displayProperties.map((prop) => (
-              <div
-                key={prop.id}
-                onClick={() => setActiveProperty(prop)}
-                className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                  activeProperty?.id === prop.id
-                    ? 'border-remax-red bg-slate-800/80 shadow-lg ring-1 ring-remax-red'
-                    : 'border-slate-800 bg-[#0B131F]/60 hover:border-slate-700 hover:bg-slate-800/40'
-                }`}
-              >
-                <div className="flex gap-3">
-                  {/* Thumbnail Image */}
-                  <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-slate-900">
-                    <img 
-                      src={prop.imagem} 
-                      alt={prop.title}
-                      className="w-full h-full object-cover" 
-                    />
-                    <span className={`absolute top-1 left-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                      prop.portal === 'QuintoAndar'
-                        ? 'bg-purple-600 text-white'
-                        : prop.status === 'vendido' 
-                          ? 'bg-emerald-600 text-white' 
-                          : prop.remaxExclusivo 
-                            ? 'bg-remax-red text-white' 
-                            : 'bg-blue-600 text-white'
-                    }`}>
-                      {prop.portal}
-                    </span>
-                  </div>
+            displayProperties.map((prop) => {
+              const capturaInfo = getCapturaTagInfo(prop.dataUltimaCaptura, prop.dataAnuncio);
 
-                  {/* Property Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-1">
-                      <h4 className="text-xs font-semibold text-slate-100 truncate" title={prop.title}>
-                        {prop.title}
-                      </h4>
-                    </div>
-
-                    <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                      {prop.endereco} - {prop.bairro}
-                    </p>
-
-                    <div className="mt-2 flex items-baseline gap-2">
-                      <span className="text-sm font-black text-white">
-                        R$ {prop.preco.toLocaleString('pt-BR')}
-                      </span>
-                      <span className="text-[11px] font-bold text-remax-accent">
-                        (R$ {prop.precoM2.toLocaleString('pt-BR')}/m²)
+              return (
+                <div
+                  key={prop.id}
+                  onClick={() => setActiveProperty(prop)}
+                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                    activeProperty?.id === prop.id
+                      ? 'border-remax-red bg-slate-800/80 shadow-lg ring-1 ring-remax-red'
+                      : 'border-slate-800 bg-[#0B131F]/60 hover:border-slate-700 hover:bg-slate-800/40'
+                  }`}
+                >
+                  <div className="flex gap-3">
+                    {/* Thumbnail Image */}
+                    <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-slate-900">
+                      <img 
+                        src={prop.imagem} 
+                        alt={prop.title}
+                        className="w-full h-full object-cover" 
+                      />
+                      <span className={`absolute top-1 left-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                        prop.portal === 'QuintoAndar'
+                          ? 'bg-purple-600 text-white'
+                          : prop.status === 'vendido' 
+                            ? 'bg-emerald-600 text-white' 
+                            : prop.remaxExclusivo 
+                              ? 'bg-remax-red text-white' 
+                              : 'bg-blue-600 text-white'
+                      }`}>
+                        {prop.portal}
                       </span>
                     </div>
 
-                    {prop.distanciaDoAlvoM && (
-                      <span className="text-[10px] text-amber-400 font-bold block mt-0.5">
-                        📍 a {prop.distanciaDoAlvoM}m do endereço alvo
-                      </span>
-                    )}
-
-                    <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400">
-                      <div className="flex items-center gap-2">
-                        <span>{prop.area}m²</span>
-                        <span>•</span>
-                        <span>{prop.quartos} qts</span>
-                        <span>•</span>
-                        <span>{prop.vagas} vag</span>
+                    {/* Property Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-1">
+                        <h4 className="text-xs font-semibold text-slate-100 truncate" title={prop.title}>
+                          {prop.title}
+                        </h4>
                       </div>
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectForCma(prop);
-                        }}
-                        className="text-[10px] bg-remax-red/20 text-remax-red hover:bg-remax-red hover:text-white px-2 py-0.5 rounded font-medium transition-all"
-                      >
-                        + Usar na ACM
-                      </button>
+                      <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                        {prop.endereco} - {prop.bairro}
+                      </p>
+
+                      <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-[10px] px-2 py-0.5 rounded border ${capturaInfo.badgeClass}`}>
+                          {capturaInfo.text}
+                        </span>
+                      </div>
+
+                      <div className="mt-1.5 flex items-baseline gap-2">
+                        <span className="text-sm font-black text-white">
+                          R$ {prop.preco.toLocaleString('pt-BR')}
+                        </span>
+                        <span className="text-[11px] font-bold text-remax-accent">
+                          (R$ {prop.precoM2.toLocaleString('pt-BR')}/m²)
+                        </span>
+                      </div>
+
+                      {prop.distanciaDoAlvoM && (
+                        <span className="text-[10px] text-amber-400 font-bold block mt-0.5">
+                          📍 a {prop.distanciaDoAlvoM}m do endereço alvo
+                        </span>
+                      )}
+
+                      <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+                        <div className="flex items-center gap-2">
+                          <span>{prop.area}m²</span>
+                          <span>•</span>
+                          <span>{prop.quartos} qts</span>
+                          <span>•</span>
+                          <span>{prop.vagas} vag</span>
+                        </div>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectForCma(prop);
+                          }}
+                          className="text-[10px] bg-remax-red/20 text-remax-red hover:bg-remax-red hover:text-white px-2 py-0.5 rounded font-medium transition-all"
+                        >
+                          + Usar na ACM
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -381,7 +387,8 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
                       border: 3px solid white;
                       box-shadow: 0 0 20px rgba(220,28,45,0.8);
                       white-space: nowrap;
-                      transform: translate(-50%, -100%);
+                      cursor: pointer;
+                      user-select: none;
                     ">
                       🎯 Endereço Alvo
                     </div>
@@ -410,7 +417,8 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
                       border: 2px solid white;
                       box-shadow: 0 4px 10px rgba(16,185,129,0.5);
                       white-space: nowrap;
-                      transform: translate(-50%, -100%);
+                      cursor: pointer;
+                      user-select: none;
                     ">
                       📄 ITBI R$ ${Math.round(itbi.precoM2Real / 1000)}k/m²
                     </div>
@@ -439,50 +447,60 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
               </Marker>
             ))}
 
-            {displayProperties.map((prop) => (
-              <Marker
-                key={prop.id}
-                position={[prop.lat, prop.lng]}
-                icon={createCustomIcon(prop.status, prop.remaxExclusivo, prop.precoM2, prop.portal)}
-                eventHandlers={{
-                  click: () => setActiveProperty(prop)
-                }}
-              >
-                <Popup>
-                  <div className="w-64 text-slate-100 p-1">
-                    <div className="relative h-32 rounded-lg overflow-hidden mb-2">
-                      <img src={prop.imagem} alt={prop.title} className="w-full h-full object-cover" />
-                      <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded text-white ${
-                        prop.portal === 'QuintoAndar' ? 'bg-purple-600' : prop.status === 'vendido' ? 'bg-emerald-600' : prop.remaxExclusivo ? 'bg-remax-red' : 'bg-blue-600'
-                      }`}>
-                        {prop.portal}
-                      </span>
-                    </div>
+            {displayProperties.map((prop) => {
+              const popupCaptura = getCapturaTagInfo(prop.dataUltimaCaptura, prop.dataAnuncio);
 
-                    <h4 className="font-bold text-xs text-white leading-tight mb-1">{prop.title}</h4>
-                    <p className="text-[11px] text-slate-400 mb-2">{prop.endereco} - {prop.bairro}</p>
-
-                    <div className="bg-[#0B131F] p-2 rounded-lg border border-slate-800 mb-3">
-                      <div className="flex justify-between items-baseline mb-1">
-                        <span className="text-[10px] text-slate-400">Preço Anunciado:</span>
-                        <span className="text-sm font-black text-white">R$ {prop.preco.toLocaleString('pt-BR')}</span>
+              return (
+                <Marker
+                  key={prop.id}
+                  position={[prop.lat, prop.lng]}
+                  icon={createCustomIcon(prop.status, prop.remaxExclusivo, prop.preco, prop.portal)}
+                  eventHandlers={{
+                    click: () => setActiveProperty(prop)
+                  }}
+                >
+                  <Popup>
+                    <div className="w-64 text-slate-100 p-1">
+                      <div className="relative h-32 rounded-lg overflow-hidden mb-2">
+                        <img src={prop.imagem} alt={prop.title} className="w-full h-full object-cover" />
+                        <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded text-white ${
+                          prop.portal === 'QuintoAndar' ? 'bg-purple-600' : prop.status === 'vendido' ? 'bg-emerald-600' : prop.remaxExclusivo ? 'bg-remax-red' : 'bg-blue-600'
+                        }`}>
+                          {prop.portal}
+                        </span>
                       </div>
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-[10px] text-slate-400">Preço por m²:</span>
-                        <span className="text-xs font-bold text-remax-accent">R$ {prop.precoM2.toLocaleString('pt-BR')}/m²</span>
-                      </div>
-                    </div>
 
-                    <button
-                      onClick={() => onSelectForCma(prop)}
-                      className="w-full py-1.5 bg-remax-red hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1 shadow-md"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" /> Adicionar na ACM RE/MAX
-                    </button>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+                      <h4 className="font-bold text-xs text-white leading-tight mb-1">{prop.title}</h4>
+                      <p className="text-[11px] text-slate-400 mb-1.5">{prop.endereco} - {prop.bairro}</p>
+
+                      <div className="mb-2">
+                        <span className={`text-[10px] px-2 py-0.5 rounded border block text-center ${popupCaptura.badgeClass}`}>
+                          {popupCaptura.text}
+                        </span>
+                      </div>
+
+                      <div className="bg-[#0B131F] p-2 rounded-lg border border-slate-800 mb-3">
+                        <div className="flex justify-between items-baseline mb-1">
+                          <span className="text-[10px] text-slate-400">Preço Anunciado:</span>
+                          <span className="text-sm font-black text-white">R$ {prop.preco.toLocaleString('pt-BR')}</span>
+                        </div>
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-[10px] text-slate-400">Preço por m²:</span>
+                          <span className="text-xs font-bold text-remax-accent">R$ {prop.precoM2.toLocaleString('pt-BR')}/m²</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => onSelectForCma(prop)}
+                        className="w-full py-1.5 bg-remax-red hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1 shadow-md"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" /> Adicionar na ACM RE/MAX
+                      </button>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
           </MapContainer>
         </div>
       </div>

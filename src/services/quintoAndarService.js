@@ -14,7 +14,8 @@ const ZONA_SUL_STREET_DATABASE = [
   { keywords: ['pedro de melo', 'dr. pedro de melo'], lat: -23.6210, lng: -46.7340, neighborhood: 'Morumbi', displayName: 'Rua Dr. Pedro de Melo, Morumbi, São Paulo - SP' },
   { keywords: ['laércio corte', 'laercio corte'], lat: -23.6270, lng: -46.7220, neighborhood: 'Morumbi', displayName: 'Rua Deputado Laércio Corte, Panamby, São Paulo - SP' },
   { keywords: ['alberto penteado', 'doutor alberto penteado'], lat: -23.6010, lng: -46.7080, neighborhood: 'Morumbi', displayName: 'Rua Doutor Alberto Penteado, Morumbi, São Paulo - SP' },
-  { keywords: ['josé janis', 'jose janis'], lat: -23.6190, lng: -46.7320, neighborhood: 'Portal do Morumbi', displayName: 'Rua José Janis, Portal do Morumbi, São Paulo - SP' },
+  { keywords: ['jorge joão saad', 'jorge joao saad', 'jorge saad', 'joão saad', 'joao saad'], lat: -23.5995, lng: -46.7170, neighborhood: 'Morumbi', displayName: 'Av. Jorge João Saad, Morumbi, São Paulo - SP' },
+  { keywords: ['clóvis de oliveira', 'clovis de oliveira'], lat: -23.5982, lng: -46.7160, neighborhood: 'Morumbi', displayName: 'Rua Dr. Clóvis de Oliveira, Morumbi, São Paulo - SP' },
   { keywords: ['morumbi', 'portal do morumbi', 'panamby', 'vila andrade'], lat: -23.6180, lng: -46.7250, neighborhood: 'Portal do Morumbi', displayName: 'Portal do Morumbi, São Paulo - SP' },
 
   // Brooklin
@@ -70,48 +71,75 @@ const ZONA_SUL_STREET_DATABASE = [
   { keywords: ['diogo jácome', 'diogo jacome'], lat: -23.5945, lng: -46.6690, neighborhood: 'Vila Nova Conceição', displayName: 'Rua Diogo Jácome, Vila Nova Conceição, SP' },
   { keywords: ['lourenço de almeida'], lat: -23.5920, lng: -46.6650, neighborhood: 'Vila Nova Conceição', displayName: 'Rua Lourenço de Almeida, Vila Nova Conceição, SP' },
   { keywords: ['afonso braz'], lat: -23.5960, lng: -46.6680, neighborhood: 'Vila Nova Conceição', displayName: 'Rua Afonso Braz, Vila Nova Conceição, SP' },
-  { keywords: ['vila nova conceição', 'vila nova conceicao'], lat: -23.5930, lng: -46.6670, neighborhood: 'Vila Nova Conceição', displayName: 'Vila Nova Conceição, SP' }
+  { keywords: ['vila nova conceição', 'vila nova conceicao'], lat: -23.5930, lng: -46.6670, neighborhood: 'Vila Nova Conceição', displayName: 'Vila Nova Conceição, SP' },
+
+  // ZONA OESTE - Butantã
+  { keywords: ['vital brasil', 'av. vital brasil'], lat: -23.5710, lng: -46.7080, neighborhood: 'Butantã', displayName: 'Av. Vital Brasil, Butantã, São Paulo - SP' },
+  { keywords: ['corinto'], lat: -23.5750, lng: -46.7150, neighborhood: 'Butantã', displayName: 'Rua Corinto, Butantã, São Paulo - SP' },
+  { keywords: ['francisco morato'], lat: -23.5810, lng: -46.7210, neighborhood: 'Butantã', displayName: 'Av. Prof. Francisco Morato, Butantã, SP' },
+  { keywords: ['butantã', 'butanta'], lat: -23.5710, lng: -46.7080, neighborhood: 'Butantã', displayName: 'Butantã, São Paulo - SP' },
+
+  // ZONA OESTE - Pinheiros
+  { keywords: ['dos pinheiros', 'rua dos pinheiros'], lat: -23.5650, lng: -46.6870, neighborhood: 'Pinheiros', displayName: 'Rua dos Pinheiros, Pinheiros, São Paulo - SP' },
+  { keywords: ['pedroso de moraes', 'pedroso de morais'], lat: -23.5610, lng: -46.6910, neighborhood: 'Pinheiros', displayName: 'Rua Pedroso de Moraes, Pinheiros, SP' },
+  { keywords: ['teodoro sampaio'], lat: -23.5590, lng: -46.6840, neighborhood: 'Pinheiros', displayName: 'Rua Teodoro Sampaio, Pinheiros, SP' },
+  { keywords: ['pinheiros'], lat: -23.5650, lng: -46.6870, neighborhood: 'Pinheiros', displayName: 'Pinheiros, São Paulo - SP' },
+
+  // ZONA OESTE - Vila Madalena
+  { keywords: ['harmonia'], lat: -23.5550, lng: -46.6900, neighborhood: 'Vila Madalena', displayName: 'Rua Harmonia, Vila Madalena, SP' },
+  { keywords: ['fradique coutinho'], lat: -23.5580, lng: -46.6880, neighborhood: 'Vila Madalena', displayName: 'Rua Fradique Coutinho, Vila Madalena, SP' },
+  { keywords: ['aspicuelta'], lat: -23.5540, lng: -46.6910, neighborhood: 'Vila Madalena', displayName: 'Rua Aspicuelta, Vila Madalena, SP' },
+  { keywords: ['vila madalena'], lat: -23.5550, lng: -46.6900, neighborhood: 'Vila Madalena', displayName: 'Vila Madalena, São Paulo - SP' },
+
+  // ZONA OESTE - Perdizes / Pompéia
+  { keywords: ['desembargador do vale'], lat: -23.5350, lng: -46.6780, neighborhood: 'Perdizes', displayName: 'Rua Desembargador do Vale, Perdizes, SP' },
+  { keywords: ['sumaré', 'sumare'], lat: -23.5410, lng: -46.6750, neighborhood: 'Perdizes', displayName: 'Av. Sumaré, Perdizes, SP' },
+  { keywords: ['turiassu', 'turiaçu'], lat: -23.5320, lng: -46.6730, neighborhood: 'Perdizes', displayName: 'Rua Turiassu, Perdizes, SP' },
+  { keywords: ['perdizes'], lat: -23.5350, lng: -46.6780, neighborhood: 'Perdizes', displayName: 'Perdizes, São Paulo - SP' },
+  { keywords: ['pompéia', 'pompeia'], lat: -23.5290, lng: -46.6850, neighborhood: 'Pompéia', displayName: 'Pompéia, São Paulo - SP' },
+
+  // ZONA OESTE - Alto de Pinheiros / Vila Leopoldina / Lapa / Jaguaré
+  { keywords: ['fonseca rodrigues'], lat: -23.5510, lng: -46.7080, neighborhood: 'Alto de Pinheiros', displayName: 'Av. Prof. Fonseca Rodrigues, Alto de Pinheiros, SP' },
+  { keywords: ['alto de pinheiros'], lat: -23.5510, lng: -46.7080, neighborhood: 'Alto de Pinheiros', displayName: 'Alto de Pinheiros, São Paulo - SP' },
+  { keywords: ['carlos weber'], lat: -23.5280, lng: -46.7260, neighborhood: 'Vila Leopoldina', displayName: 'Rua Carlos Weber, Vila Leopoldina, SP' },
+  { keywords: ['vila leopoldina', 'leopoldina'], lat: -23.5280, lng: -46.7260, neighborhood: 'Vila Leopoldina', displayName: 'Vila Leopoldina, São Paulo - SP' },
+  { keywords: ['clélia', 'clelia'], lat: -23.5220, lng: -46.7000, neighborhood: 'Lapa', displayName: 'Rua Clélia, Lapa, SP' },
+  { keywords: ['lapa'], lat: -23.5220, lng: -46.7000, neighborhood: 'Lapa', displayName: 'Lapa, São Paulo - SP' },
+  { keywords: ['jaguaré', 'jaguare'], lat: -23.5420, lng: -46.7380, neighborhood: 'Jaguaré', displayName: 'Jaguaré, São Paulo - SP' }
 ];
 
 /**
- * Geocodifica um endereço em texto para coordenadas exatas da Zona Sul de SP
+ * Geocodifica um endereço em texto com alta precisão usando Google Maps API / Geocoding Remoto
  */
 export async function geocodeAddress(addressText) {
-  const queryLower = addressText.toLowerCase().trim();
+  const queryClean = addressText.trim();
+  const googleKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-  // 1. Tentar casamento estrito/semântico no Banco de Vias da Zona Sul (maior precisão)
-  const matched = ZONA_SUL_STREET_DATABASE.find(item => 
-    item.keywords.some(kw => queryLower.includes(kw))
-  );
-
-  if (matched) {
-    // Extração de número para micro-deslocamento determinístico ao longo da via
-    const numberMatch = addressText.match(/\b\d+\b/);
-    let latOffset = 0;
-    let lngOffset = 0;
-
-    if (numberMatch) {
-      const num = parseInt(numberMatch[0], 10);
-      if (num > 0) {
-        latOffset = ((num % 100) / 100 - 0.5) * 0.0015;
-        lngOffset = (((num * 3) % 100) / 100 - 0.5) * 0.0015;
+  // 1. Tentar Google Maps Geocoding API se a chave estiver configurada no .env (.env.local)
+  if (googleKey) {
+    try {
+      const fullQuery = `${queryClean}, São Paulo, SP, Brasil`;
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullQuery)}&key=${googleKey}`);
+      const data = await res.json();
+      if (data.status === 'OK' && data.results && data.results.length > 0) {
+        const location = data.results[0].geometry.location;
+        return {
+          lat: location.lat,
+          lng: location.lng,
+          displayName: data.results[0].formatted_address
+        };
       }
+    } catch (err) {
+      console.warn("Aviso na chamada da API Google Maps Geocoding:", err);
     }
-
-    return {
-      lat: matched.lat + latOffset,
-      lng: matched.lng + lngOffset,
-      displayName: matched.displayName,
-      neighborhood: matched.neighborhood
-    };
   }
 
-  // 2. Se não encontrou no banco local, consultar Nominatim com restrição estrita do Bounding Box Zona Sul SP
+  // 2. Tentar Geocodificação de Alta Precisão via OpenStreetMap Nominatim
   try {
-    const fullQuery = `${addressText}, São Paulo, SP, Brasil`;
+    const fullQuery = `${queryClean}, São Paulo, SP, Brasil`;
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullQuery)}&format=json&limit=1`,
-      { headers: { 'User-Agent': 'ImoveisZonaSulApp/1.0' } }
+      { headers: { 'User-Agent': 'ImoveisZonaSulApp/2.0' } }
     );
     const data = await response.json();
 
@@ -119,22 +147,35 @@ export async function geocodeAddress(addressText) {
       const lat = parseFloat(data[0].lat);
       const lng = parseFloat(data[0].lon);
 
-      // Validação do Bounding Box da Zona Sul/Centro-Sul de SP (-23.72 <= lat <= -23.54 e -46.78 <= lng <= -46.55)
-      if (lat >= -23.72 && lat <= -23.54 && lng >= -46.78 && lng <= -46.55) {
+      // Validação do Bounding Box da Grande São Paulo (-23.75 <= lat <= -23.45 e -46.80 <= lng <= -46.45)
+      if (lat >= -23.75 && lat <= -23.45 && lng >= -46.80 && lng <= -46.45) {
         return {
           lat: lat,
           lng: lng,
           displayName: data[0].display_name
         };
-      } else {
-        console.warn("Resultado Nominatim fora do bounding box da Zona Sul SP (rejeitado):", data[0]);
       }
     }
   } catch (err) {
-    console.warn("Aviso ao consultar Nominatim:", err);
+    console.warn("Aviso na geocodificação remota:", err);
   }
 
-  // 3. Fallback Padrão Zona Sul (Brooklin)
+  // 3. Fallback no Banco Local de Vias da Zona Sul (coordenadas estritas sem offsets)
+  const queryLower = queryClean.toLowerCase();
+  const matched = ZONA_SUL_STREET_DATABASE.find(item => 
+    item.keywords.some(kw => queryLower.includes(kw))
+  );
+
+  if (matched) {
+    return {
+      lat: matched.lat,
+      lng: matched.lng,
+      displayName: matched.displayName,
+      neighborhood: matched.neighborhood
+    };
+  }
+
+  // 4. Fallback Padrão Brooklin
   return {
     lat: -23.6080,
     lng: -46.6940,
@@ -162,77 +203,7 @@ export function calculateHaversineDistanceMeters(lat1, lon1, lat2, lon2) {
 
 const PORTALS = ["QuintoAndar", "RE/MAX", "ZAP Imóveis", "VivaReal", "OLX", "Imovelweb"];
 
-const STREETS_BY_NEIGHBORHOOD = {
-  "Morumbi": [
-    "Av. Giovanni Gronchi",
-    "Rua Guilherme Dumont Villares",
-    "Rua Marechal Hastimphilo de Moura",
-    "Rua Engenheiro Oscar Americano",
-    "Av. Morumbi",
-    "Rua Dr. Pedro de Melo",
-    "Rua Deputado Laércio Corte",
-    "Rua Doutor Alberto Penteado"
-  ],
-  "Portal do Morumbi": [
-    "Rua Marechal Hastimphilo de Moura",
-    "Rua Guilherme Dumont Villares",
-    "Av. Giovanni Gronchi",
-    "Rua Dr. Pedro de Melo",
-    "Rua Deputado Laércio Corte",
-    "Rua José Janis"
-  ],
-  "Brooklin": [
-    "Rua Padre Antônio José dos Santos",
-    "Av. Engenheiro Luís Carlos Berrini",
-    "Rua Flórida",
-    "Rua Arizona",
-    "Rua Michigan",
-    "Rua Arorizal",
-    "Rua Nova York"
-  ],
-  "Moema": [
-    "Av. Moema",
-    "Alameda dos Maracatins",
-    "Alameda Jauaperi",
-    "Alameda dos Anapurus",
-    "Alameda dos Nhambiquaras",
-    "Alameda dos Arapanés"
-  ],
-  "Campo Belo": [
-    "Rua Pascal",
-    "Rua Vieira de Morais",
-    "Rua Campo Belo",
-    "Rua Gabriele D'Annunzio",
-    "Rua Doutor Antônio Bento"
-  ],
-  "Vila Mariana": [
-    "Rua Vergueiro",
-    "Rua Domingos de Morais",
-    "Rua Maestro Callia",
-    "Rua Cubatão",
-    "Rua Pelotas"
-  ],
-  "Itaim Bibi": [
-    "Rua Clodomiro Amazonas",
-    "Rua Pedroso Alvarenga",
-    "Rua Joaquim Floriano",
-    "Rua Tabapuã",
-    "Rua Manuel Guedes"
-  ],
-  "Santo Amaro": [
-    "Av. Adolfo Pinheiro",
-    "Rua Alexandre Dumas",
-    "Rua Amador Bueno",
-    "Rua Isabel",
-    "Av. Santo Amaro"
-  ],
-  "Vila Nova Conceição": [
-    "Rua Praça Cidade de Milão",
-    "Rua Diogo Jácome",
-    "Rua Lourenço de Almeida",
-    "Rua Afonso Braz"
-  ]
-};
+
 
 const IMAGES_LIST = [
   "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
@@ -251,37 +222,31 @@ const IMAGES_LIST = [
  * Gera uma varredura EXAUSTIVA de imóveis (35 a 55 oportunidades) espalhadas por todo o raio geográfico
  */
 export function generateExhaustiveListingsInRadius(centerLat, centerLng, radiusMeters = 1000, bairroName = "Brooklin") {
-  // Quantidade exaustiva proporcional ao tamanho do raio
+  // Quantidade proporcional ao raio
   const targetCount = radiusMeters <= 500 ? 25 : radiusMeters <= 1000 ? 40 : 60;
   const listings = [];
 
-  // Obter vias reais do bairro pesquisado
-  const neighborhoodStreets = STREETS_BY_NEIGHBORHOOD[bairroName] || STREETS_BY_NEIGHBORHOOD["Morumbi"];
+  // Obter vias reais e precisas da região
+  const matchedStreets = ZONA_SUL_STREET_DATABASE.filter(item => 
+    item.neighborhood === bairroName || item.keywords.some(kw => bairroName.toLowerCase().includes(kw))
+  );
+  
+  const activeStreets = matchedStreets.length > 0 ? matchedStreets : ZONA_SUL_STREET_DATABASE.filter(item => item.neighborhood === 'Brooklin');
 
   for (let i = 0; i < targetCount; i++) {
-    // Distribuição homogênea pelos quadrantes do raio (anel interno, médio e externo)
-    const angle = (i / targetCount) * 2 * Math.PI + (Math.random() * 0.3 - 0.15);
-    // Garantir que a distância gerada seja estritamente até 92% do raio máximo
-    const distanceFactor = Math.pow(Math.random(), 0.7);
-    const targetDist = Math.max(30, Math.round(distanceFactor * radiusMeters * 0.92));
+    const streetObj = activeStreets[i % activeStreets.length];
     
-    // Converter distância em graus (~111.000m por grau)
-    let deltaLat = (targetDist * Math.cos(angle)) / 111000;
-    let deltaLng = (targetDist * Math.sin(angle)) / (111000 * Math.cos(centerLat * (Math.PI / 180)));
+    // Distribuir imóveis dentro do perímetro do raio solicitado (entre 20m e 85% do raio max)
+    const angle = (i * (2 * Math.PI / targetCount)) + ((Math.random() - 0.5) * 0.15);
+    const distanceMeters = Math.floor(20 + Math.random() * (radiusMeters * 0.83));
     
-    let propLat = centerLat + deltaLat;
-    let propLng = centerLng + deltaLng;
-
-    // Haversine de validação para garantir conformidade estrita de distância
-    let distanceMeters = calculateHaversineDistanceMeters(centerLat, centerLng, propLat, propLng);
-    if (distanceMeters > radiusMeters) {
-      const scale = (radiusMeters * 0.90) / distanceMeters;
-      deltaLat *= scale;
-      deltaLng *= scale;
-      propLat = centerLat + deltaLat;
-      propLng = centerLng + deltaLng;
-      distanceMeters = calculateHaversineDistanceMeters(centerLat, centerLng, propLat, propLng);
-    }
+    const latOffset = (distanceMeters * Math.cos(angle)) / 111111;
+    const lngOffset = (distanceMeters * Math.sin(angle)) / (111111 * Math.cos(centerLat * (Math.PI / 180)));
+    
+    const propLat = centerLat + latOffset;
+    const propLng = centerLng + lngOffset;
+    
+    const actualDistance = calculateHaversineDistanceMeters(centerLat, centerLng, propLat, propLng);
     
     const area = Math.floor(Math.random() * (260 - 45) + 45);
     const precoM2 = Math.floor(9500 + Math.random() * 8500);
@@ -293,18 +258,18 @@ export function generateExhaustiveListingsInRadius(centerLat, centerLng, radiusM
     const portal = PORTALS[i % PORTALS.length];
     const isRemax = portal === "RE/MAX";
     const status = Math.random() > 0.30 ? "venda" : "vendido";
-    const street = neighborhoodStreets[i % neighborhoodStreets.length];
-    const number = Math.floor(Math.random() * 1400) + 20;
+    const number = 50 + (i * 45) % 1800;
+    const streetName = streetObj.displayName.split(',')[0];
 
     listings.push({
       id: `EXH-${portal.substring(0,3).toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`,
       code: `${portal.substring(0,3).toUpperCase()}-ZS-${Math.floor(1000 + Math.random() * 9000)}`,
-      title: `${area > 180 ? 'Cobertura' : area < 55 ? 'Studio' : 'Apartamento'} ${area}m² - ${quartos} dorms (${bairroName})`,
-      bairro: bairroName,
+      title: `${area > 180 ? 'Cobertura' : area < 55 ? 'Studio' : 'Apartamento'} ${area}m² - ${quartos} dorms (${streetObj.neighborhood})`,
+      bairro: streetObj.neighborhood,
       cidade: "São Paulo",
       estado: "SP",
       zona: "Zona Sul",
-      endereco: `${street}, ${number}`,
+      endereco: `${streetName}, ${number}`,
       tipo: area > 180 ? "Cobertura" : area < 55 ? "Studio" : "Apartamento",
       preco: preco,
       area: area,
@@ -320,10 +285,11 @@ export function generateExhaustiveListingsInRadius(centerLat, centerLng, radiusM
       remaxExclusivo: isRemax,
       diasNoMercado: Math.floor(Math.random() * 50) + 2,
       dataAnuncio: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString().split('T')[0],
+      dataUltimaCaptura: new Date().toISOString().split('T')[0],
       dataVenda: status === "vendido" ? new Date().toISOString().split('T')[0] : null,
       lat: propLat,
       lng: propLng,
-      distanciaDoAlvoM: distanceMeters,
+      distanciaDoAlvoM: actualDistance,
       imagem: IMAGES_LIST[i % IMAGES_LIST.length],
       corretor: isRemax ? "Corretor RE/MAX Zona Sul" : `Imobiliária Parceira ${portal}`,
       contato: "(11) 98000-5544"

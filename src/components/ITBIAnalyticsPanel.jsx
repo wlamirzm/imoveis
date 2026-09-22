@@ -39,6 +39,14 @@ export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel
             <span className="px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
               Dados Oficiais PMSP (Últimos {selectedTimeframe} Meses)
             </span>
+            <a 
+              href="https://mapa.onr.org.br/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-full hover:bg-amber-500 hover:text-slate-950 transition-all flex items-center gap-1"
+            >
+              <span>ONR Registradores ↗</span>
+            </a>
             <span className="text-xs text-slate-400">Arrecadação Municipal ITBI (3%)</span>
           </div>
           <h2 className="text-2xl font-bold mt-2 text-white flex items-center gap-2">

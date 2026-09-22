@@ -1,31 +1,11 @@
 import React from 'react';
-import { Search, Filter, X, SlidersHorizontal, CheckCircle2 } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export default function FilterBar({ filters, setFilters, onResetFilters }) {
   return (
     <div className="bg-[#131F2E] border border-slate-800 rounded-xl p-4 shadow-xl mb-6">
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         
-        {/* Search Text Input */}
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Buscar por endereço, bairro ou título do imóvel..."
-            value={filters.search}
-            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-            className="w-full bg-[#0B131F] border border-slate-700/70 rounded-lg text-sm text-slate-100 pl-9 pr-4 py-2.5 focus:outline-none focus:border-remax-accent focus:ring-1 focus:ring-remax-accent transition-all placeholder:text-slate-500"
-          />
-          {filters.search && (
-            <button
-              onClick={() => setFilters(prev => ({ ...prev, search: '' }))}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
         {/* Filter Dropdowns */}
         <div className="flex flex-wrap items-center gap-3">
           
@@ -101,6 +81,22 @@ export default function FilterBar({ filters, setFilters, onResetFilters }) {
             <option value="2">2+ Quartos</option>
             <option value="3">3+ Quartos</option>
             <option value="4">4+ Quartos</option>
+          </select>
+
+          {/* Tempo Máximo da Última Captura / Aparição */}
+          <select
+            value={filters.tempoMaximoCaptura || 'all'}
+            onChange={(e) => setFilters(prev => ({ ...prev, tempoMaximoCaptura: e.target.value }))}
+            className="bg-[#0B131F] border border-amber-500/40 rounded-lg text-xs text-amber-300 px-3 py-2.5 focus:outline-none focus:border-amber-400 cursor-pointer font-medium shadow-sm"
+            title="Filtrar por quando o anúncio foi visto pela última vez em pesquisas"
+          >
+            <option value="all">🗓️ Qualquer Período</option>
+            <option value="7">👁️ Visto nos últimos 7 dias</option>
+            <option value="15">👁️ Visto nos últimos 15 dias</option>
+            <option value="30">👁️ Visto nos últimos 30 dias</option>
+            <option value="60">👁️ Visto nos últimos 60 dias</option>
+            <option value="90">👁️ Visto nos últimos 90 dias</option>
+            <option value="180">👁️ Visto nos últimos 180 dias</option>
           </select>
 
           {/* Limpar Filtros */}

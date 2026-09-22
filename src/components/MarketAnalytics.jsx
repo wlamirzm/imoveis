@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, 
+  AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, 
   CartesianGrid, Tooltip, ResponsiveContainer, Legend 
 } from 'recharts';
 import { 
@@ -10,10 +10,8 @@ import {
   Building, 
   ArrowUpRight, 
   ArrowDownRight,
-  Sparkles,
   PieChart as PieIcon,
-  ShieldCheck,
-  CheckCircle2
+  ShieldCheck
 } from 'lucide-react';
 import { historicalPriceData, portalDistribution } from '../data/mockProperties';
 
@@ -51,6 +49,18 @@ export default function MarketAnalytics({ properties, selectedBairro }) {
       "Vila Nova Conceição": 23200
     };
 
+    const fallbackStatsMap = {
+      "Brooklin": { ativos: 18, vendidos: 7, liquidezDias: 28 },
+      "Morumbi": { ativos: 22, vendidos: 5, liquidezDias: 42 },
+      "Moema": { ativos: 15, vendidos: 9, liquidezDias: 22 },
+      "Campo Belo": { ativos: 14, vendidos: 6, liquidezDias: 31 },
+      "Vila Mariana": { ativos: 16, vendidos: 8, liquidezDias: 25 },
+      "Santo Amaro": { ativos: 12, vendidos: 4, liquidezDias: 38 },
+      "Chácara Santo Antônio": { ativos: 10, vendidos: 5, liquidezDias: 33 },
+      "Vila Nova Conceição": { ativos: 9, vendidos: 6, liquidezDias: 19 }
+    };
+    const fallback = fallbackStatsMap[bairroName] || { ativos: 12, vendidos: 5, liquidezDias: 30 };
+
     const m2 = list.length > 0 
       ? Math.round(list.reduce((sum, p) => sum + p.precoM2, 0) / list.length) 
       : (baseM2Map[bairroName] || 13500);
@@ -58,9 +68,9 @@ export default function MarketAnalytics({ properties, selectedBairro }) {
     return {
       bairro: bairroName,
       precoM2: m2,
-      ativos: countVenda > 0 ? countVenda : Math.floor(8 + Math.random() * 15),
-      vendidos: countVendido > 0 ? countVendido : Math.floor(3 + Math.random() * 8),
-      liquidezDias: Math.floor(18 + Math.random() * 30)
+      ativos: countVenda > 0 ? countVenda : fallback.ativos,
+      vendidos: countVendido > 0 ? countVendido : fallback.vendidos,
+      liquidezDias: fallback.liquidezDias
     };
   });
 

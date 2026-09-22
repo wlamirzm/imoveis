@@ -31,12 +31,28 @@ body {
   color: #F8FAFC !important;
   border: 1px solid #1E293B;
   border-radius: 0.75rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7);
   padding: 4px;
 }
 
 .leaflet-popup-tip {
   background-color: #131F2E !important;
+}
+
+/* Micro-interações nos marcadores do mapa (Aplica apenas ao filho div sem desalinhar as coordenadas do Leaflet) */
+.custom-map-pin, .itbi-map-pin, .target-center-pin {
+  cursor: pointer !important;
+}
+
+.custom-map-pin > div, .itbi-map-pin > div, .target-center-pin > div {
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer !important;
+}
+
+.custom-map-pin:hover > div, .itbi-map-pin:hover > div {
+  transform: scale(1.1) !important;
+  filter: brightness(1.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6) !important;
 }
 
 /* Custom Scrollbars */

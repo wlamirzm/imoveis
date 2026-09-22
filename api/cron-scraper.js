@@ -47,7 +47,7 @@ export default async function handler(req, res) {
       contato: "(11) 98000-9900"
     };
 
-    const { data, error } = await supabase.from('properties').insert([property]);
+    const { error } = await supabase.from('properties').insert([property]);
 
     if (error) {
       return res.status(500).json({ success: false, error: error.message });

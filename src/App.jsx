@@ -14,13 +14,12 @@ import { generateQuintoAndarListingsInRadius, calculateHaversineDistanceMeters }
 import { getDadosUrbanisticosPMSP } from './services/geosampaService';
 import { fetchITBITransactions, calculateITBIMetrics } from './services/itbiService';
 import { ITBIAnalyticsPanel } from './components/ITBIAnalyticsPanel';
-import { Bot, CheckCircle2, Database, Landmark, Train } from 'lucide-react';
+import { CheckCircle2, Landmark } from 'lucide-react';
 
 export default function App() {
   const [properties, setProperties] = useState(initialProperties);
   const [activeTab, setActiveTab] = useState('mapa'); // 'mapa' | 'analytics' | 'acm' | 'scraper'
   const [selectedBairro, setSelectedBairro] = useState('Todos os Bairros (Zona Sul)');
-  const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
   
   // Estado da Busca por Raio Geográfico (Unificado para TODOS os Portais + PMSP GeoSampa)
   const [activeRadiusSearch, setActiveRadiusSearch] = useState(null);
@@ -37,7 +36,8 @@ export default function App() {
     status: 'all',
     tipo: 'all',
     portal: 'all',
-    quartos: 'all'
+    quartos: 'all',
+    tempoMaximoCaptura: 'all'
   });
 
   // Estado do Scraper Automatizado
@@ -46,29 +46,6 @@ export default function App() {
     'Pipeline Supabase + PostGIS + GeoSampa PMSP ativo. Aguardando disparo de varredura...'
   ]);
   const [toastNotification, setToastNotification] = useState(null);
-
-  // Carregar imóveis reais do Supabase e disparar busca por raio inicial no endereço padrão
-  useEffect(() => {
-    async function loadSupabaseData() {
-      const dbProperties = await fetchPropertiesFromSupabase();
-      if (dbProperties && dbProperties.length > 0) {
-        setProperties(dbProperties);
-        setIsSupabaseConnected(true);
-        setScraperLogs(prev => [...prev, `✅ Conectado ao Supabase PostgreSQL (${dbProperties.length} imóveis na tabela 'properties')`]);
-      }
-      
-      // Aplicar busca inicial focada no endereço padrão
-      handleApplyRadiusSearch({
-        addressText: 'Rua Padre Antônio José dos Santos, 500',
-        displayName: 'Brooklin, São Paulo - SP',
-        centerLat: -23.6080,
-        centerLng: -46.6940,
-        radiusMeters: 1000
-      });
-    }
-    loadSupabaseData();
-  }, []);
-
   const [itbiTimeframeMonths, setItbiTimeframeMonths] = useState(24); // 24 Meses default
 
   // Handler para Busca por Raio Geográfico Unificada (TODOS os Portais + PMSP GeoSampa + ITBI)
@@ -84,8 +61,8 @@ export default function App() {
       detectedBairro = searchInfo.neighborhood;
     } else if (textLower.includes("moema") || textLower.includes("maracatins") || textLower.includes("jauaperi")) {
       detectedBairro = "Moema";
-    } else if (textLower.includes("morumbi") || textLower.includes("villares") || textLower.includes("hastimphilo") || textLower.includes("gronchi") || textLower.includes("laércio") || textLower.includes("oscar americano")) {
-      detectedBairro = "Portal do Morumbi";
+    } else if (textLower.includes("morumbi") || textLower.includes("saad") || textLower.includes("jorge") || textLower.includes("clóvis") || textLower.includes("clovis") || textLower.includes("villares") || textLower.includes("hastimphilo") || textLower.includes("gronchi") || textLower.includes("laércio") || textLower.includes("oscar americano")) {
+      detectedBairro = "Morumbi";
     } else if (textLower.includes("campo belo") || textLower.includes("pascal") || textLower.includes("vieira de morais")) {
       detectedBairro = "Campo Belo";
     } else if (textLower.includes("vila mariana") || textLower.includes("vergueiro") || textLower.includes("domingos de morais")) {
@@ -127,6 +104,27 @@ export default function App() {
     });
   };
 
+  // Carregar imóveis reais do Supabase e disparar busca por raio inicial no endereço padrão
+  useEffect(() => {
+    async function loadSupabaseData() {
+      const dbProperties = await fetchPropertiesFromSupabase();
+      if (dbProperties && dbProperties.length > 0) {
+        setProperties(dbProperties);
+        setScraperLogs(prev => [...prev, `✅ Conectado ao Supabase PostgreSQL (${dbProperties.length} imóveis na tabela 'properties')`]);
+      }
+      
+      // Aplicar busca inicial focada no endereço padrão
+      handleApplyRadiusSearch({
+        addressText: 'Rua Padre Antônio José dos Santos, 500',
+        displayName: 'Brooklin, São Paulo - SP',
+        centerLat: -23.6080,
+        centerLng: -46.6940,
+        radiusMeters: 1000
+      });
+    }
+    loadSupabaseData();
+  }, []);
+
   const handleITBITimeframeChange = (months) => {
     setItbiTimeframeMonths(months);
     if (activeRadiusSearch) {
@@ -142,7 +140,7 @@ export default function App() {
     setItbiList(defaultItbi);
   };
 
-  // Handler para disparar a Coleta Automatizada e gravar no Supabase
+  // Handler para disparar a Coleta Automatizada e gravar no Supabase (Preserva registros antigos)
   const handleTriggerScrape = async (targetBairroParam) => {
     const bairroToScrape = (targetBairroParam && !targetBairroParam.includes('Todos os Bairros'))
       ? targetBairroParam
@@ -155,16 +153,45 @@ export default function App() {
       setScraperLogs(prev => [...prev, logMessage]);
     });
 
-    // Salvar novos imóveis raspados no Supabase
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Salvar novos imóveis raspados no Supabase com timestamp de captura de hoje
     for (const prop of newProperties) {
-      await savePropertyToSupabase(prop);
+      const propWithDate = { ...prop, dataUltimaCaptura: todayStr };
+      await savePropertyToSupabase(propWithDate);
     }
 
-    setProperties(prev => [...newProperties, ...prev]);
+    // Mesclar sem apagar registros antigos: atualiza dataUltimaCaptura nos re-encontrados e preserva os anteriores
+    setProperties(prev => {
+      const updatedList = [...prev];
+      const codeIndexMap = new Map(updatedList.map((p, idx) => [p.code || p.id, idx]));
+
+      for (const item of newProperties) {
+        const itemKey = item.code || item.id;
+        const existingIdx = codeIndexMap.get(itemKey);
+        if (existingIdx !== undefined) {
+          // Atualiza imóvel re-encontrado mantendo histórico e renovando dataUltimaCaptura para hoje
+          updatedList[existingIdx] = {
+            ...updatedList[existingIdx],
+            ...item,
+            dataUltimaCaptura: todayStr,
+            dataAnuncio: updatedList[existingIdx].dataAnuncio || item.dataAnuncio
+          };
+        } else {
+          // Adiciona novo imóvel encontrado com tag de hoje
+          updatedList.unshift({
+            ...item,
+            dataUltimaCaptura: todayStr
+          });
+        }
+      }
+      return updatedList;
+    });
+
     setIsScraping(false);
     
     // Toast Notification
-    setToastNotification(`+${newProperties.length} novos imóveis coletados e salvos no Supabase em ${bairroToScrape}!`);
+    setToastNotification(`+${newProperties.length} imóveis atualizados/coletados com tag de captura de hoje (${todayStr}) em ${bairroToScrape}!`);
     setTimeout(() => setToastNotification(null), 4000);
   };
 
@@ -175,18 +202,26 @@ export default function App() {
       status: 'all',
       tipo: 'all',
       portal: 'all',
-      quartos: 'all'
+      quartos: 'all',
+      tempoMaximoCaptura: 'all'
     });
     setSelectedBairro('Todos os Bairros (Zona Sul)');
   };
 
-  // Imóveis consolidados: quando a Busca por Raio estiver ativa, observar EXCLUSIVAMENTE os imóveis do endereço pesquisado
+  // Imóveis consolidados: unifica os imóveis cadastrados no Supabase com as ofertas capturadas no raio
   const allPropertiesCombined = useMemo(() => {
-    if (activeRadiusSearch && quintoAndarListings.length > 0) {
-      return quintoAndarListings;
+    if (!quintoAndarListings || quintoAndarListings.length === 0) {
+      return properties;
     }
-    return properties;
-  }, [properties, quintoAndarListings, activeRadiusSearch]);
+    const existingIds = new Set(properties.map(p => p.id || p.code));
+    const merged = [...properties];
+    for (const item of quintoAndarListings) {
+      if (!existingIds.has(item.id) && !existingIds.has(item.code)) {
+        merged.push(item);
+      }
+    }
+    return merged;
+  }, [properties, quintoAndarListings]);
 
   // Filtragem Dinâmica dos Imóveis (Aplica o raio espacial a TODOS os portais)
   const filteredProperties = useMemo(() => {
@@ -239,6 +274,21 @@ export default function App() {
       if (filters.quartos !== 'all') {
         const minQuartos = Number(filters.quartos);
         if (prop.quartos < minQuartos) return false;
+      }
+
+      // Filtro por Tempo Máximo da Última Aparição / Captura
+      if (filters.tempoMaximoCaptura && filters.tempoMaximoCaptura !== 'all') {
+        const maxDays = Number(filters.tempoMaximoCaptura);
+        const dateStr = prop.dataUltimaCaptura || prop.dataAnuncio;
+        if (dateStr) {
+          const dateParts = dateStr.split('T')[0].split('-');
+          const propDate = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]));
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const diffMs = today.getTime() - propDate.getTime();
+          const diffDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+          if (diffDays > maxDays) return false;
+        }
       }
 
       return true;
@@ -307,8 +357,16 @@ export default function App() {
                 <Landmark className="w-5 h-5" />
               </div>
               <div>
-                <span className="font-bold text-white block text-sm">
-                  Dados Oficiais Prefeitura SP (GeoSampa + ITBI) no Raio de {activeRadiusSearch.radiusMeters >= 1000 ? `${activeRadiusSearch.radiusMeters / 1000}km` : `${activeRadiusSearch.radiusMeters}m`}
+                <span className="font-bold text-white flex items-center gap-2 text-sm">
+                  Dados Oficiais Prefeitura SP (Novo GeoSampa + ITBI) no Raio de {activeRadiusSearch.radiusMeters >= 1000 ? `${activeRadiusSearch.radiusMeters / 1000}km` : `${activeRadiusSearch.radiusMeters}m`}
+                  <a 
+                    href="https://novogeosampa.prefeitura.sp.gov.br/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded font-bold hover:bg-amber-500 hover:text-slate-950 transition-all"
+                  >
+                    novogeosampa.prefeitura.sp.gov.br ↗
+                  </a>
                 </span>
                 <span className="text-slate-400">
                   Endereço Alvo: <strong>{activeRadiusSearch.addressText}</strong>
@@ -381,6 +439,7 @@ export default function App() {
 
         {activeTab === 'acm' && (
           <CmaReportGenerator
+            key={selectedForCma ? `${selectedForCma.title}-${selectedForCma.bairro}` : 'cma-default'}
             properties={properties}
             initialSubjectProperty={selectedForCma}
           />
@@ -411,7 +470,13 @@ export default function App() {
             <span>•</span>
             <span>OLX</span>
             <span>•</span>
-            <span>GeoSampa PMSP</span>
+            <a href="https://novogeosampa.prefeitura.sp.gov.br/" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 font-bold">
+              Novo GeoSampa PMSP ↗
+            </a>
+            <span>•</span>
+            <a href="https://mapa.onr.org.br/" target="_blank" rel="noopener noreferrer" className="hover:text-amber-400 font-bold">
+              ONR (mapa.onr.org.br) ↗
+            </a>
           </div>
         </div>
       </footer>
