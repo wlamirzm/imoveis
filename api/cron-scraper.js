@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
     const property = {
       code: `CRON-${portal.substring(0,3).toUpperCase()}-${idNum}`,
-      title: `Apartamento ${area}m² com Lazer Completo (${targetBairro} - ZS)`,
+      title: `Apartamento ${area}m² (${targetBairro} - ZS)`,
       bairro: targetBairro,
       cidade: "São Paulo",
       estado: "SP",
@@ -29,6 +29,7 @@ export default async function handler(req, res) {
       tipo: "Apartamento",
       preco: preco,
       area: area,
+      preco_m2: precoM2,
       quartos: 3,
       suites: 2,
       vagas: 2,
@@ -40,14 +41,15 @@ export default async function handler(req, res) {
       remax_exclusivo: portal === "RE/MAX Portal",
       dias_no_mercado: 1,
       data_anuncio: new Date().toISOString().split('T')[0],
-      latitude: -23.6080,
-      longitude: -46.6880,
+      data_ultima_captura: new Date().toISOString().split('T')[0],
+      latitude: -23.6080 + (Math.random() - 0.5) * 0.01,
+      longitude: -46.6880 + (Math.random() - 0.5) * 0.01,
       image_url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
       corretor: "Coletor Automático Cron Vercel",
       contato: "(11) 98000-9900"
     };
 
-    const { error } = await supabase.from('properties').insert([property]);
+    const { error } = await supabase.from('properties').upsert([property], { onConflict: 'code' });
 
     if (error) {
       return res.status(500).json({ success: false, error: error.message });
