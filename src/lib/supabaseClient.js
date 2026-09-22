@@ -142,7 +142,6 @@ export async function fetchPropertiesFromSupabase() {
 export async function savePropertyToSupabase(property) {
   try {
     const today = new Date().toISOString().split('T')[0];
-    const precoM2 = property.precoM2 || (property.area ? Math.round(property.preco / property.area) : null);
 
     const { data, error } = await supabase
       .from('properties')
@@ -157,7 +156,6 @@ export async function savePropertyToSupabase(property) {
         tipo: property.tipo,
         preco: property.preco,
         area: property.area,
-        preco_m2: precoM2,
         quartos: property.quartos,
         suites: property.suites,
         vagas: property.vagas,

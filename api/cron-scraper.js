@@ -29,7 +29,6 @@ export default async function handler(req, res) {
       tipo: "Apartamento",
       preco: preco,
       area: area,
-      preco_m2: precoM2,
       quartos: 3,
       suites: 2,
       vagas: 2,

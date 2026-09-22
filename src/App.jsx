@@ -154,10 +154,23 @@ export default function App() {
     const updatedProperties = await fetchPropertiesFromSupabase();
     setProperties(updatedProperties || []);
 
+    // Atualizar o centro do raio de busca para o bairro raspado se houver imóveis novos
+    if (newProperties && newProperties.length > 0) {
+      const firstNew = newProperties[0];
+      handleApplyRadiusSearch({
+        addressText: `${firstNew.bairro}, São Paulo - SP`,
+        displayName: `${firstNew.bairro}, São Paulo - SP`,
+        centerLat: firstNew.lat,
+        centerLng: firstNew.lng,
+        radiusMeters: 3000,
+        neighborhood: firstNew.bairro
+      });
+    }
+
     setIsScraping(false);
     
     // Toast Notification
-    setToastNotification(`+${newProperties.length} imóveis atualizados/coletados com tag de captura de hoje (${todayStr}) em ${bairroToScrape}!`);
+    setToastNotification(`+${newProperties.length} imóveis salvos com sucesso no Supabase (${todayStr}) em ${bairroToScrape}!`);
     setTimeout(() => setToastNotification(null), 4000);
   };
 
