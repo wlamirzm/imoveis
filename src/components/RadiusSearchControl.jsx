@@ -85,6 +85,7 @@ export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadius
           <div className="flex items-center gap-1.5 bg-[#0B131F] p-1 rounded-lg border border-slate-700">
             <span className="text-[11px] text-slate-400 px-2 font-medium">Raio:</span>
             {[
+              { label: '100m', val: 100 },
               { label: '250m', val: 250 },
               { label: '500m', val: 500 },
               { label: '1km', val: 1000 },

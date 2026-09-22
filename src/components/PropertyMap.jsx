@@ -82,7 +82,7 @@ function MapCenterUpdater({ center, radiusMeters, focusLocation }) {
       // Zoom level 19 enquadra com precisão o raio de 50 metros do imóvel
       map.setView([focusLocation.lat, focusLocation.lng], 19, { animate: true });
     } else if (center) {
-      const zoomLevel = radiusMeters ? (radiusMeters <= 250 ? 17 : radiusMeters <= 500 ? 16 : radiusMeters <= 1000 ? 15 : 14) : 14;
+      const zoomLevel = radiusMeters ? (radiusMeters <= 100 ? 18 : radiusMeters <= 250 ? 17 : radiusMeters <= 500 ? 16 : radiusMeters <= 1000 ? 15 : 14) : 14;
       map.setView(center, zoomLevel, { animate: true });
     }
   }, [center, radiusMeters, focusLocation, map]);
