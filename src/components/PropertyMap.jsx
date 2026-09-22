@@ -73,11 +73,20 @@ const createCustomIcon = (status, isRemax, priceM2, portal) => {
   });
 };
 
-// Componente para re-centralizar o mapa quando a região ou busca por raio muda
-function MapCenterUpdater({ center, radiusMeters }) {
+// Componente para re-centralizar o mapa e aplicar raio de 50m no imóvel selecionado
+function MapCenterUpdater({ center, radiusMeters, focusLocation }) {
   const map = useMap();
-  const zoomLevel = radiusMeters ? (radiusMeters <= 500 ? 16 : radiusMeters <= 1000 ? 15 : 14) : 14;
-  map.setView(center, zoomLevel);
+
+  React.useEffect(() => {
+    if (focusLocation) {
+      // Zoom level 19 enquadra com precisão o raio de 50 metros do imóvel
+      map.setView([focusLocation.lat, focusLocation.lng], 19, { animate: true });
+    } else if (center) {
+      const zoomLevel = radiusMeters ? (radiusMeters <= 250 ? 17 : radiusMeters <= 500 ? 16 : radiusMeters <= 1000 ? 15 : 14) : 14;
+      map.setView(center, zoomLevel, { animate: true });
+    }
+  }, [center, radiusMeters, focusLocation, map]);
+
   return null;
 }
 
@@ -285,6 +294,16 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
 
         {/* Leaflet Map Canvas */}
         <div className="flex-1 w-full h-full relative">
+          {activeProperty && (
+            <div className="absolute top-3 right-3 z-[1000] flex items-center gap-2">
+              <button
+                onClick={() => setActiveProperty(null)}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-3.5 py-2 rounded-xl shadow-2xl flex items-center gap-1.5 transition-all border border-amber-300 cursor-pointer animate-pulse"
+              >
+                🎯 Raio de 50m Ativo — Voltar à Visão Geral
+              </button>
+            </div>
+          )}
           <MapContainer 
             center={defaultCenter} 
             zoom={14} 
@@ -299,10 +318,11 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
             
             <MapCenterUpdater 
               center={defaultCenter} 
-              radiusMeters={activeRadiusSearch ? activeRadiusSearch.radiusMeters : null} 
+              radiusMeters={activeRadiusSearch ? activeRadiusSearch.radiusMeters : null}
+              focusLocation={activeProperty ? { lat: activeProperty.lat, lng: activeProperty.lng } : null}
             />
 
-            {/* Círculo do Raio de Busca */}
+            {/* Círculo do Raio de Busca Geral */}
             {activeRadiusSearch && (
               <Circle
                 center={[activeRadiusSearch.centerLat, activeRadiusSearch.centerLng]}
@@ -310,9 +330,23 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
                 pathOptions={{
                   color: '#DC1C2D',
                   fillColor: '#DC1C2D',
-                  fillOpacity: 0.15,
+                  fillOpacity: 0.12,
                   weight: 2,
                   dashArray: '6, 6'
+                }}
+              />
+            )}
+
+            {/* Raio Específico de 50 metros do Imóvel Selecionado */}
+            {activeProperty && (
+              <Circle
+                center={[activeProperty.lat, activeProperty.lng]}
+                radius={50}
+                pathOptions={{
+                  color: '#F59E0B',
+                  fillColor: '#F59E0B',
+                  fillOpacity: 0.35,
+                  weight: 3
                 }}
               />
             )}
