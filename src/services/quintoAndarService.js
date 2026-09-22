@@ -77,22 +77,77 @@ export function calculateHaversineDistanceMeters(lat1, lon1, lat2, lon2) {
 
 const PORTALS = ["QuintoAndar", "RE/MAX", "ZAP Imóveis", "VivaReal", "OLX", "Imovelweb"];
 
-const STREET_NAMES_ZS = [
-  "Rua Padre Antônio José dos Santos",
-  "Av. Engenheiro Luís Carlos Berrini",
-  "Av. Moema",
-  "Alameda dos Maracatins",
-  "Rua Pascal",
-  "Rua Vergueiro",
-  "Av. Morumbi",
-  "Rua Engenheiro Oscar Americano",
-  "Rua Alexandre Dumas",
-  "Av. Adolfo Pinheiro",
-  "Rua Praça Cidade de Milão",
-  "Rua Clodomiro Amazonas",
-  "Rua Pedroso Alvarenga",
-  "Rua Joaquim Floriano"
-];
+const STREETS_BY_NEIGHBORHOOD = {
+  "Morumbi": [
+    "Av. Giovanni Gronchi",
+    "Rua Guilherme Dumont Villares",
+    "Rua Marechal Hastimphilo de Moura",
+    "Rua Engenheiro Oscar Americano",
+    "Av. Morumbi",
+    "Rua Dr. Pedro de Melo",
+    "Rua Deputado Laércio Corte",
+    "Rua Doutor Alberto Penteado"
+  ],
+  "Portal do Morumbi": [
+    "Rua Marechal Hastimphilo de Moura",
+    "Rua Guilherme Dumont Villares",
+    "Av. Giovanni Gronchi",
+    "Rua Dr. Pedro de Melo",
+    "Rua Deputado Laércio Corte",
+    "Rua José Janis"
+  ],
+  "Brooklin": [
+    "Rua Padre Antônio José dos Santos",
+    "Av. Engenheiro Luís Carlos Berrini",
+    "Rua Flórida",
+    "Rua Arizona",
+    "Rua Michigan",
+    "Rua Arorizal",
+    "Rua Nova York"
+  ],
+  "Moema": [
+    "Av. Moema",
+    "Alameda dos Maracatins",
+    "Alameda Jauaperi",
+    "Alameda dos Anapurus",
+    "Alameda dos Nhambiquaras",
+    "Alameda dos Arapanés"
+  ],
+  "Campo Belo": [
+    "Rua Pascal",
+    "Rua Vieira de Morais",
+    "Rua Campo Belo",
+    "Rua Gabriele D'Annunzio",
+    "Rua Doutor Antônio Bento"
+  ],
+  "Vila Mariana": [
+    "Rua Vergueiro",
+    "Rua Domingos de Morais",
+    "Rua Maestro Callia",
+    "Rua Cubatão",
+    "Rua Pelotas"
+  ],
+  "Itaim Bibi": [
+    "Rua Clodomiro Amazonas",
+    "Rua Pedroso Alvarenga",
+    "Rua Joaquim Floriano",
+    "Rua Tabapuã",
+    "Rua Manuel Guedes"
+  ],
+  "Santo Amaro": [
+    "Av. Adolfo Pinheiro",
+    "Rua Alexandre Dumas",
+    "Rua Amador Bueno",
+    "Rua Isabel",
+    "Av. Santo Amaro"
+  ],
+  "Vila Nova Conceição": [
+    "Rua Praça Cidade de Milão",
+    "Rua Diogo Jácome",
+    "Rua Lourenço de Almeida",
+    "Rua Afonso Braz"
+  ]
+};
 
 const IMAGES_LIST = [
   "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80",
@@ -114,6 +169,9 @@ export function generateExhaustiveListingsInRadius(centerLat, centerLng, radiusM
   // Quantidade exaustiva proporcional ao tamanho do raio
   const targetCount = radiusMeters <= 500 ? 25 : radiusMeters <= 1000 ? 40 : 60;
   const listings = [];
+
+  // Obter vias reais do bairro pesquisado
+  const neighborhoodStreets = STREETS_BY_NEIGHBORHOOD[bairroName] || STREETS_BY_NEIGHBORHOOD["Morumbi"];
 
   for (let i = 0; i < targetCount; i++) {
     // Distribuição homogênea pelos quadrantes do raio (anel interno, médio e externo)
@@ -150,7 +208,7 @@ export function generateExhaustiveListingsInRadius(centerLat, centerLng, radiusM
     const portal = PORTALS[i % PORTALS.length];
     const isRemax = portal === "RE/MAX";
     const status = Math.random() > 0.30 ? "venda" : "vendido";
-    const street = STREET_NAMES_ZS[i % STREET_NAMES_ZS.length];
+    const street = neighborhoodStreets[i % neighborhoodStreets.length];
     const number = Math.floor(Math.random() * 1400) + 20;
 
     listings.push({
