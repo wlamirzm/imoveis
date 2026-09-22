@@ -69,8 +69,10 @@ export default function App() {
     loadSupabaseData();
   }, []);
 
+  const [itbiTimeframeMonths, setItbiTimeframeMonths] = useState(24); // 24 Meses default
+
   // Handler para Busca por Raio Geográfico Unificada (TODOS os Portais + PMSP GeoSampa + ITBI)
-  const handleApplyRadiusSearch = async (searchInfo) => {
+  const handleApplyRadiusSearch = async (searchInfo, timeframeMonths = itbiTimeframeMonths) => {
     setActiveRadiusSearch(searchInfo);
     
     // Extrair o nome do bairro do endereço procurado para titulação adequada
@@ -92,11 +94,12 @@ export default function App() {
       detectedBairro
     );
 
-    // Buscar transações de ITBI no raio geográfico
+    // Buscar transações de ITBI no raio geográfico nos últimos N meses (default: 24 meses)
     const fetchedItbi = await fetchITBITransactions(
       searchInfo.centerLat,
       searchInfo.centerLng,
-      searchInfo.radiusMeters
+      searchInfo.radiusMeters,
+      timeframeMonths
     );
     setItbiList(fetchedItbi);
 
@@ -107,6 +110,13 @@ export default function App() {
     setQuintoAndarListings(qaResults);
     setToastNotification(`Filtro de ${searchInfo.radiusMeters >= 1000 ? `${searchInfo.radiusMeters / 1000}km` : `${searchInfo.radiusMeters}m`} aplicado estritamente ao raio de ${searchInfo.addressText}!`);
     setTimeout(() => setToastNotification(null), 4000);
+  };
+
+  const handleITBITimeframeChange = (months) => {
+    setItbiTimeframeMonths(months);
+    if (activeRadiusSearch) {
+      handleApplyRadiusSearch(activeRadiusSearch, months);
+    }
   };
 
   const handleClearRadiusSearch = async () => {
@@ -332,6 +342,7 @@ export default function App() {
             metrics={itbiMetrics}
             itbiList={itbiList}
             selectedRadiusLabel={activeRadiusSearch ? (activeRadiusSearch.radiusMeters >= 1000 ? `${activeRadiusSearch.radiusMeters / 1000} km` : `${activeRadiusSearch.radiusMeters} m`) : '2 km'}
+            onTimeframeChange={handleITBITimeframeChange}
           />
         )}
 

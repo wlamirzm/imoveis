@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   BarChart, 
   Bar, 
@@ -10,7 +10,16 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 
-export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel = '2 km' }) {
+export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel = '1 km', onTimeframeChange }) {
+  const [selectedTimeframe, setSelectedTimeframe] = useState(24); // 24 Meses default
+
+  const handleTimeframeClick = (months) => {
+    setSelectedTimeframe(months);
+    if (onTimeframeChange) {
+      onTimeframeChange(months);
+    }
+  };
+
   const chartData = [
     {
       name: 'Média da Região',
@@ -26,7 +35,7 @@ export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel
         <div>
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
-              Dados Oficiais PMSP
+              Dados Oficiais PMSP (Últimos {selectedTimeframe} Meses)
             </span>
             <span className="text-xs text-slate-400">Arrecadação Municipal ITBI (3%)</span>
           </div>
@@ -37,17 +46,40 @@ export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel
             Análise de Vendas Concretizadas & ITBI no Raio ({selectedRadiusLabel})
           </h2>
           <p className="text-slate-400 text-sm mt-1">
-            Imóveis efetivamente vendidos e escriturados com imposto pago na Prefeitura de SP.
+            Imóveis efetivamente vendidos e escriturados com imposto pago na Prefeitura de SP nos últimos {selectedTimeframe} meses.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 bg-emerald-950/40 border border-emerald-500/30 px-4 py-3 rounded-xl">
-          <div className="text-right">
-            <p className="text-xs text-emerald-400 font-medium">Margem de Negociação Efetiva</p>
-            <p className="text-2xl font-extrabold text-emerald-400">-{metrics.descontoMedioPct}%</p>
+        {/* Seletor de Janela Temporal (12m vs 24m) & Margem */}
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+          <div className="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
+            <button
+              onClick={() => handleTimeframeClick(12)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                selectedTimeframe === 12
+                  ? 'bg-emerald-500 text-slate-950 shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              12 Meses
+            </button>
+            <button
+              onClick={() => handleTimeframeClick(24)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                selectedTimeframe === 24
+                  ? 'bg-emerald-500 text-slate-950 shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              24 Meses
+            </button>
           </div>
-          <div className="text-xs text-slate-300 max-w-[140px] leading-tight">
-            Desconto médio entre valor anunciado nos portais e fechamento em cartório.
+
+          <div className="flex items-center gap-3 bg-emerald-950/40 border border-emerald-500/30 px-4 py-2.5 rounded-xl">
+            <div className="text-right">
+              <p className="text-xs text-emerald-400 font-medium">Desconto Médio de Fechamento</p>
+              <p className="text-2xl font-extrabold text-emerald-400">-{metrics.descontoMedioPct}%</p>
+            </div>
           </div>
         </div>
       </div>
@@ -56,11 +88,11 @@ export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         {/* Metric 1 */}
         <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Vendas Efetivadas</p>
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Vendas Efetivadas ({selectedTimeframe} Meses)</p>
           <p className="text-3xl font-bold text-white mt-1">{metrics.totalVendas} <span className="text-sm font-normal text-slate-400">imóveis</span></p>
           <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-            Registradas na PMSP
+            Escrituradas na PMSP
           </p>
         </div>
 
@@ -70,7 +102,7 @@ export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel
           <p className="text-3xl font-bold text-emerald-400 mt-1">
             R$ {metrics.precoMedioM2Real.toLocaleString('pt-BR')} <span className="text-sm font-normal text-slate-400">/m²</span>
           </p>
-          <p className="text-xs text-slate-400 mt-2">Valor de escrituração oficial</p>
+          <p className="text-xs text-slate-400 mt-2">Valor oficial em cartório</p>
         </div>
 
         {/* Metric 3 */}
@@ -122,7 +154,7 @@ export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel
         {/* Tabela de Transações de ITBI Efetivadas */}
         <div className="bg-slate-800/40 border border-slate-800 rounded-xl p-5 lg:col-span-2 overflow-x-auto">
           <h3 className="text-sm font-semibold text-slate-200 mb-4 flex items-center justify-between">
-            <span>Últimas Transações ITBI Concretizadas (PMSP)</span>
+            <span>Últimas Transações ITBI Concretizadas (PMSP - {selectedTimeframe} Meses)</span>
             <span className="text-xs text-slate-400">{itbiList.length} registros no raio</span>
           </h3>
 
@@ -134,7 +166,7 @@ export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel
                 <th className="p-2.5">Área (m²)</th>
                 <th className="p-2.5">Valor Venda</th>
                 <th className="p-2.5">Preço m²</th>
-                <th className="p-2.5">ITBI Pago (3%)</th>
+                <th className="p-2.5">Data Imposto</th>
                 <th className="p-2.5">Distância</th>
               </tr>
             </thead>
@@ -154,8 +186,8 @@ export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel
                     <td className="p-2.5 text-slate-200 font-medium">
                       R$ {Math.round(item.precoM2Real).toLocaleString('pt-BR')}
                     </td>
-                    <td className="p-2.5 text-slate-400">
-                      R$ {item.valorItbi.toLocaleString('pt-BR')}
+                    <td className="p-2.5 text-slate-400 font-mono text-[11px]">
+                      {item.dataArrecadacao}
                     </td>
                     <td className="p-2.5 text-slate-400">
                       {item.distanciaM < 1000 ? `${item.distanciaM}m` : `${(item.distanciaM / 1000).toFixed(1)}km`}
@@ -165,7 +197,7 @@ export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel
               ) : (
                 <tr>
                   <td colSpan={7} className="text-center py-6 text-slate-500">
-                    Nenhuma transação de ITBI registrada neste raio geográfico.
+                    Nenhuma transação de ITBI registrada nos últimos {selectedTimeframe} meses neste raio geográfico.
                   </td>
                 </tr>
               )}
