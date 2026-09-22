@@ -47,7 +47,7 @@ export default function App() {
   ]);
   const [toastNotification, setToastNotification] = useState(null);
 
-  // Carregar imóveis reais do Supabase e ITBI padrão na inicialização
+  // Carregar imóveis reais do Supabase e disparar busca por raio inicial no endereço padrão
   useEffect(() => {
     async function loadSupabaseData() {
       const dbProperties = await fetchPropertiesFromSupabase();
@@ -57,8 +57,14 @@ export default function App() {
         setScraperLogs(prev => [...prev, `✅ Conectado ao Supabase PostgreSQL (${dbProperties.length} imóveis na tabela 'properties')`]);
       }
       
-      const initialItbi = await fetchITBITransactions(-23.6062, -46.6948, 2000);
-      setItbiList(initialItbi);
+      // Aplicar busca inicial focada no endereço padrão
+      handleApplyRadiusSearch({
+        addressText: 'Rua Padre Antônio José dos Santos, 500',
+        displayName: 'Brooklin, São Paulo - SP',
+        centerLat: -23.6080,
+        centerLng: -46.6940,
+        radiusMeters: 1000
+      });
     }
     loadSupabaseData();
   }, []);
@@ -149,10 +155,13 @@ export default function App() {
     setSelectedBairro('Todos os Bairros (Zona Sul)');
   };
 
-  // Imóveis consolidados (Base Supabase/RE/MAX/ZAP/VivaReal/OLX + QuintoAndar)
+  // Imóveis consolidados: quando a Busca por Raio estiver ativa, observar EXCLUSIVAMENTE os imóveis do endereço pesquisado
   const allPropertiesCombined = useMemo(() => {
-    return [...quintoAndarListings, ...properties];
-  }, [properties, quintoAndarListings]);
+    if (activeRadiusSearch && quintoAndarListings.length > 0) {
+      return quintoAndarListings;
+    }
+    return properties;
+  }, [properties, quintoAndarListings, activeRadiusSearch]);
 
   // Filtragem Dinâmica dos Imóveis (Aplica o raio espacial a TODOS os portais)
   const filteredProperties = useMemo(() => {
