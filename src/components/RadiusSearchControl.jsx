@@ -2,31 +2,31 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, Target, X, Building, Navigation } from 'lucide-react';
 import { geocodeAddress } from '../services/quintoAndarService';
 
-// Base de sugestões de endereços populares e de alta demanda na Zona Sul de SP
+// Base de sugestões de endereços populares e de alta demanda na Zona Sul de SP (com coordenadas exatas)
 const POPULAR_ZONA_SUL_ADDRESSES = [
-  { text: 'Rua Guilherme Dumont Villares, 1200', bairro: 'Portal do Morumbi', desc: 'Portal do Morumbi / Vila Andrade, São Paulo - SP' },
-  { text: 'Rua Guilherme Dumont Villares, 500', bairro: 'Morumbi', desc: 'Vila Andrade, São Paulo - SP' },
-  { text: 'Rua Padre Antônio José dos Santos, 500', bairro: 'Brooklin', desc: 'Brooklin Novo, São Paulo - SP' },
-  { text: 'Av. Engenheiro Luís Carlos Berrini, 1050', bairro: 'Brooklin', desc: 'Polo Comercial Berrini, SP' },
-  { text: 'Rua Florida, 880', bairro: 'Brooklin', desc: 'Próximo à Berrini, SP' },
-  { text: 'Rua Arizona, 420', bairro: 'Brooklin', desc: 'Brooklin, SP' },
-  { text: 'Av. Moema, 450', bairro: 'Moema', desc: 'Moema Pássaros, SP' },
-  { text: 'Alameda dos Maracatins, 890', bairro: 'Moema', desc: 'Moema Indios, SP' },
-  { text: 'Alameda Jauaperi, 550', bairro: 'Moema', desc: 'Próximo ao Metrô Moema, SP' },
-  { text: 'Rua Marechal Hastimphilo de Moura, 320', bairro: 'Portal do Morumbi', desc: 'Portal do Morumbi / Vila Andrade, SP' },
-  { text: 'Av. Giovanni Gronchi, 6000', bairro: 'Portal do Morumbi', desc: 'Portal do Morumbi, SP' },
-  { text: 'Rua Dr. Pedro de Melo, 180', bairro: 'Morumbi', desc: 'Vila Andrade / Morumbi, SP' },
-  { text: 'Rua Deputado Laércio Corte, 1200', bairro: 'Morumbi', desc: 'Panamby / Morumbi, SP' },
-  { text: 'Rua Engenheiro Oscar Americano, 850', bairro: 'Morumbi', desc: 'Alto do Morumbi, SP' },
-  { text: 'Rua Pascal, 1200', bairro: 'Campo Belo', desc: 'Campo Belo, SP' },
-  { text: 'Rua Vieira de Morais, 640', bairro: 'Campo Belo', desc: 'Eixo Comercial Campo Belo, SP' },
-  { text: 'Rua Vergueiro, 2400', bairro: 'Vila Mariana', desc: 'Próximo Metrô Ana Rosa, SP' },
-  { text: 'Rua Domingos de Morais, 1500', bairro: 'Vila Mariana', desc: 'Vila Mariana, SP' },
-  { text: 'Rua Clodomiro Amazonas, 500', bairro: 'Itaim Bibi', desc: 'Itaim Bibi, SP' },
-  { text: 'Rua Joaquim Floriano, 800', bairro: 'Itaim Bibi', desc: 'Itaim Bibi, SP' },
-  { text: 'Av. Adolfo Pinheiro, 900', bairro: 'Santo Amaro', desc: 'Metrô Adolfo Pinheiro, SP' },
-  { text: 'Rua Alexandre Dumas, 1500', bairro: 'Chácara Santo Antônio', desc: 'Chácara Santo Antônio, SP' },
-  { text: 'Rua Praça Cidade de Milão, 100', bairro: 'Vila Nova Conceição', desc: 'Próximo ao Parque Ibirapuera, SP' }
+  { text: 'Rua Guilherme Dumont Villares, 1200', bairro: 'Portal do Morumbi', desc: 'Portal do Morumbi / Vila Andrade, São Paulo - SP', lat: -23.6185, lng: -46.7310 },
+  { text: 'Rua Guilherme Dumont Villares, 500', bairro: 'Morumbi', desc: 'Vila Andrade, São Paulo - SP', lat: -23.6175, lng: -46.7295 },
+  { text: 'Rua Padre Antônio José dos Santos, 500', bairro: 'Brooklin', desc: 'Brooklin Novo, São Paulo - SP', lat: -23.6080, lng: -46.6940 },
+  { text: 'Av. Engenheiro Luís Carlos Berrini, 1050', bairro: 'Brooklin', desc: 'Polo Comercial Berrini, SP', lat: -23.6020, lng: -46.6960 },
+  { text: 'Rua Florida, 880', bairro: 'Brooklin', desc: 'Próximo à Berrini, SP', lat: -23.6060, lng: -46.6920 },
+  { text: 'Rua Arizona, 420', bairro: 'Brooklin', desc: 'Brooklin, SP', lat: -23.6075, lng: -46.6910 },
+  { text: 'Av. Moema, 450', bairro: 'Moema', desc: 'Moema Pássaros, SP', lat: -23.6035, lng: -46.6612 },
+  { text: 'Alameda dos Maracatins, 890', bairro: 'Moema', desc: 'Moema Indios, SP', lat: -23.6060, lng: -46.6580 },
+  { text: 'Alameda Jauaperi, 550', bairro: 'Moema', desc: 'Próximo ao Metrô Moema, SP', lat: -23.6040, lng: -46.6630 },
+  { text: 'Rua Marechal Hastimphilo de Moura, 320', bairro: 'Portal do Morumbi', desc: 'Portal do Morumbi / Vila Andrade, SP', lat: -23.6165, lng: -46.7360 },
+  { text: 'Av. Giovanni Gronchi, 6000', bairro: 'Portal do Morumbi', desc: 'Portal do Morumbi, SP', lat: -23.6140, lng: -46.7240 },
+  { text: 'Rua Dr. Pedro de Melo, 180', bairro: 'Morumbi', desc: 'Vila Andrade / Morumbi, SP', lat: -23.6210, lng: -46.7340 },
+  { text: 'Rua Deputado Laércio Corte, 1200', bairro: 'Morumbi', desc: 'Panamby / Morumbi, SP', lat: -23.6270, lng: -46.7220 },
+  { text: 'Rua Engenheiro Oscar Americano, 850', bairro: 'Morumbi', desc: 'Alto do Morumbi, SP', lat: -23.5975, lng: -46.7050 },
+  { text: 'Rua Pascal, 1200', bairro: 'Campo Belo', desc: 'Campo Belo, SP', lat: -23.6180, lng: -46.6710 },
+  { text: 'Rua Vieira de Morais, 640', bairro: 'Campo Belo', desc: 'Eixo Comercial Campo Belo, SP', lat: -23.6160, lng: -46.6740 },
+  { text: 'Rua Vergueiro, 2400', bairro: 'Vila Mariana', desc: 'Próximo Metrô Ana Rosa, SP', lat: -23.5890, lng: -46.6380 },
+  { text: 'Rua Domingos de Morais, 1500', bairro: 'Vila Mariana', desc: 'Vila Mariana, SP', lat: -23.5870, lng: -46.6360 },
+  { text: 'Rua Clodomiro Amazonas, 500', bairro: 'Itaim Bibi', desc: 'Itaim Bibi, SP', lat: -23.5850, lng: -46.6750 },
+  { text: 'Rua Joaquim Floriano, 800', bairro: 'Itaim Bibi', desc: 'Itaim Bibi, SP', lat: -23.5840, lng: -46.6730 },
+  { text: 'Av. Adolfo Pinheiro, 900', bairro: 'Santo Amaro', desc: 'Metrô Adolfo Pinheiro, SP', lat: -23.6520, lng: -46.7040 },
+  { text: 'Rua Alexandre Dumas, 1500', bairro: 'Chácara Santo Antônio', desc: 'Chácara Santo Antônio, SP', lat: -23.6260, lng: -46.7020 },
+  { text: 'Rua Praça Cidade de Milão, 100', bairro: 'Vila Nova Conceição', desc: 'Próximo ao Parque Ibirapuera, SP', lat: -23.5930, lng: -46.6670 }
 ];
 
 export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadiusSearch, isSearching }) {
@@ -69,27 +69,33 @@ export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadius
     }
   };
 
-  const executeSearch = async (address, radius) => {
+  const executeSearch = async (address, radius, customCoords = null) => {
     if (!address.trim()) return;
 
     setShowDropdown(false);
-    const coords = await geocodeAddress(address);
+    const coords = customCoords || await geocodeAddress(address);
     const searchInfo = {
       addressText: address,
-      displayName: coords.displayName,
+      displayName: coords.displayName || address,
       centerLat: coords.lat,
       centerLng: coords.lng,
-      radiusMeters: radius
+      radiusMeters: radius,
+      neighborhood: coords.neighborhood
     };
 
     setActiveSearchInfo(searchInfo);
     onApplyRadiusSearch(searchInfo);
   };
 
-  const handleSelectSuggestion = (suggestionText) => {
-    setAddressInput(suggestionText);
+  const handleSelectSuggestion = (item) => {
+    setAddressInput(item.text);
     setShowDropdown(false);
-    executeSearch(suggestionText, selectedRadiusMeters);
+    executeSearch(item.text, selectedRadiusMeters, { 
+      lat: item.lat, 
+      lng: item.lng, 
+      displayName: item.desc,
+      neighborhood: item.bairro
+    });
   };
 
   const handleExecuteSearch = (e) => {
@@ -160,7 +166,7 @@ export default function RadiusSearchControl({ onApplyRadiusSearch, onClearRadius
                 {suggestions.map((item, idx) => (
                   <div
                     key={idx}
-                    onClick={() => handleSelectSuggestion(item.text)}
+                    onClick={() => handleSelectSuggestion(item)}
                     className="p-3 hover:bg-slate-800/80 cursor-pointer transition-colors flex items-center justify-between gap-2"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">

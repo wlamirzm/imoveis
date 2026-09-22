@@ -3,58 +3,143 @@
 /**
  * Geocodifica um endereço em texto para coordenadas (latitude, longitude) usando OpenStreetMap Nominatim
  */
-const ZONA_SUL_KNOWN_LOCATIONS = [
-  { keywords: ['guilherme', 'dumont', 'dummont', 'villares', 'villar'], lat: -23.6185, lng: -46.7310, displayName: 'Rua Guilherme Dumont Villares, Morumbi, São Paulo - SP' },
-  { keywords: ['padre antônio', 'berrini', 'brooklin'], lat: -23.6080, lng: -46.6940, displayName: 'Brooklin, São Paulo - SP' },
-  { keywords: ['moema', 'maracatins', 'jauaperi', 'ibira'], lat: -23.6035, lng: -46.6612, displayName: 'Moema, São Paulo - SP' },
-  { keywords: ['morumbi', 'oscar americano', 'panamby', 'hastimphilo'], lat: -23.6180, lng: -46.7250, displayName: 'Portal do Morumbi, São Paulo - SP' },
-  { keywords: ['campo belo', 'pascal', 'vieira de morais'], lat: -23.6180, lng: -46.6710, displayName: 'Campo Belo, São Paulo - SP' },
-  { keywords: ['vergueiro', 'vila mariana', 'domingos de morais', 'ana rosa'], lat: -23.5890, lng: -46.6380, displayName: 'Vila Mariana, São Paulo - SP' },
-  { keywords: ['itaim', 'clodomiro', 'joaquim floriano', 'pedroso alvarenga'], lat: -23.5850, lng: -46.6750, displayName: 'Itaim Bibi, São Paulo - SP' },
-  { keywords: ['adolfo pinheiro', 'santo amaro', 'chácara santo antônio', 'alexandre dumas'], lat: -23.6260, lng: -46.7020, displayName: 'Santo Amaro, São Paulo - SP' },
-  { keywords: ['vila nova conceição', 'cidade de milão'], lat: -23.5930, lng: -46.6670, displayName: 'Vila Nova Conceição, São Paulo - SP' }
+// Dicionário Estrito e Geocodificador de Alta Precisão para Ruas e Bairros da Zona Sul de SP
+const ZONA_SUL_STREET_DATABASE = [
+  // Morumbi / Portal do Morumbi / Vila Andrade
+  { keywords: ['guilherme dumont villares', 'guilherme dummont villares', 'dumont villares', 'dummont villares', 'villares'], lat: -23.6185, lng: -46.7310, neighborhood: 'Portal do Morumbi', displayName: 'Rua Guilherme Dumont Villares, Morumbi, São Paulo - SP' },
+  { keywords: ['hastimphilo', 'marechal hastimphilo'], lat: -23.6165, lng: -46.7360, neighborhood: 'Portal do Morumbi', displayName: 'Rua Marechal Hastimphilo de Moura, Morumbi, São Paulo - SP' },
+  { keywords: ['giovanni gronchi'], lat: -23.6140, lng: -46.7240, neighborhood: 'Portal do Morumbi', displayName: 'Av. Giovanni Gronchi, Morumbi, São Paulo - SP' },
+  { keywords: ['oscar americano', 'engenheiro oscar americano'], lat: -23.5975, lng: -46.7050, neighborhood: 'Morumbi', displayName: 'Rua Engenheiro Oscar Americano, Morumbi, São Paulo - SP' },
+  { keywords: ['av. morumbi', 'avenida morumbi'], lat: -23.6050, lng: -46.7100, neighborhood: 'Morumbi', displayName: 'Av. Morumbi, São Paulo - SP' },
+  { keywords: ['pedro de melo', 'dr. pedro de melo'], lat: -23.6210, lng: -46.7340, neighborhood: 'Morumbi', displayName: 'Rua Dr. Pedro de Melo, Morumbi, São Paulo - SP' },
+  { keywords: ['laércio corte', 'laercio corte'], lat: -23.6270, lng: -46.7220, neighborhood: 'Morumbi', displayName: 'Rua Deputado Laércio Corte, Panamby, São Paulo - SP' },
+  { keywords: ['alberto penteado', 'doutor alberto penteado'], lat: -23.6010, lng: -46.7080, neighborhood: 'Morumbi', displayName: 'Rua Doutor Alberto Penteado, Morumbi, São Paulo - SP' },
+  { keywords: ['josé janis', 'jose janis'], lat: -23.6190, lng: -46.7320, neighborhood: 'Portal do Morumbi', displayName: 'Rua José Janis, Portal do Morumbi, São Paulo - SP' },
+  { keywords: ['morumbi', 'portal do morumbi', 'panamby', 'vila andrade'], lat: -23.6180, lng: -46.7250, neighborhood: 'Portal do Morumbi', displayName: 'Portal do Morumbi, São Paulo - SP' },
+
+  // Brooklin
+  { keywords: ['padre antônio', 'padre antonio'], lat: -23.6080, lng: -46.6940, neighborhood: 'Brooklin', displayName: 'Rua Padre Antônio José dos Santos, Brooklin, São Paulo - SP' },
+  { keywords: ['berrini', 'luís carlos berrini', 'luis carlos berrini'], lat: -23.6020, lng: -46.6960, neighborhood: 'Brooklin', displayName: 'Av. Eng. Luís Carlos Berrini, Brooklin, São Paulo - SP' },
+  { keywords: ['florida', 'flórida'], lat: -23.6060, lng: -46.6920, neighborhood: 'Brooklin', displayName: 'Rua Flórida, Brooklin, São Paulo - SP' },
+  { keywords: ['arizona'], lat: -23.6075, lng: -46.6910, neighborhood: 'Brooklin', displayName: 'Rua Arizona, Brooklin, São Paulo - SP' },
+  { keywords: ['michigan'], lat: -23.6090, lng: -46.6890, neighborhood: 'Brooklin', displayName: 'Rua Michigan, Brooklin, São Paulo - SP' },
+  { keywords: ['arorizal'], lat: -23.6110, lng: -46.6930, neighborhood: 'Brooklin', displayName: 'Rua Arorizal, Brooklin, São Paulo - SP' },
+  { keywords: ['nova york'], lat: -23.6045, lng: -46.6870, neighborhood: 'Brooklin', displayName: 'Rua Nova York, Brooklin, São Paulo - SP' },
+  { keywords: ['brooklin'], lat: -23.6080, lng: -46.6940, neighborhood: 'Brooklin', displayName: 'Brooklin, São Paulo - SP' },
+
+  // Moema
+  { keywords: ['av. moema', 'avenida moema'], lat: -23.6035, lng: -46.6612, neighborhood: 'Moema', displayName: 'Av. Moema, São Paulo - SP' },
+  { keywords: ['maracatins'], lat: -23.6060, lng: -46.6580, neighborhood: 'Moema', displayName: 'Alameda dos Maracatins, Moema, São Paulo - SP' },
+  { keywords: ['jauaperi'], lat: -23.6040, lng: -46.6630, neighborhood: 'Moema', displayName: 'Alameda Jauaperi, Moema, São Paulo - SP' },
+  { keywords: ['anapurus'], lat: -23.6080, lng: -46.6570, neighborhood: 'Moema', displayName: 'Alameda dos Anapurus, Moema, São Paulo - SP' },
+  { keywords: ['nhambiquaras'], lat: -23.6050, lng: -46.6600, neighborhood: 'Moema', displayName: 'Alameda dos Nhambiquaras, Moema, São Paulo - SP' },
+  { keywords: ['arapanés', 'arapanes'], lat: -23.6025, lng: -46.6640, neighborhood: 'Moema', displayName: 'Alameda dos Arapanés, Moema, São Paulo - SP' },
+  { keywords: ['moema'], lat: -23.6035, lng: -46.6612, neighborhood: 'Moema', displayName: 'Moema, São Paulo - SP' },
+
+  // Campo Belo
+  { keywords: ['pascal'], lat: -23.6180, lng: -46.6710, neighborhood: 'Campo Belo', displayName: 'Rua Pascal, Campo Belo, São Paulo - SP' },
+  { keywords: ['vieira de morais', 'vieira de moraes'], lat: -23.6160, lng: -46.6740, neighborhood: 'Campo Belo', displayName: 'Rua Vieira de Morais, Campo Belo, São Paulo - SP' },
+  { keywords: ['gabriele d\'annunzio', 'annunzio'], lat: -23.6150, lng: -46.6680, neighborhood: 'Campo Belo', displayName: 'Rua Gabriele D\'Annunzio, Campo Belo, SP' },
+  { keywords: ['antônio bento', 'antonio bento'], lat: -23.6140, lng: -46.6720, neighborhood: 'Campo Belo', displayName: 'Rua Doutor Antônio Bento, Campo Belo, SP' },
+  { keywords: ['campo belo'], lat: -23.6180, lng: -46.6710, neighborhood: 'Campo Belo', displayName: 'Campo Belo, São Paulo - SP' },
+
+  // Vila Mariana
+  { keywords: ['vergueiro'], lat: -23.5890, lng: -46.6380, neighborhood: 'Vila Mariana', displayName: 'Rua Vergueiro, Vila Mariana, São Paulo - SP' },
+  { keywords: ['domingos de morais', 'domingos de moraes'], lat: -23.5870, lng: -46.6360, neighborhood: 'Vila Mariana', displayName: 'Rua Domingos de Morais, Vila Mariana, SP' },
+  { keywords: ['maestro callia'], lat: -23.5840, lng: -46.6390, neighborhood: 'Vila Mariana', displayName: 'Rua Maestro Callia, Vila Mariana, SP' },
+  { keywords: ['cubatão', 'cubatao'], lat: -23.5790, lng: -46.6430, neighborhood: 'Vila Mariana', displayName: 'Rua Cubatão, Vila Mariana, SP' },
+  { keywords: ['pelotas'], lat: -23.5830, lng: -46.6450, neighborhood: 'Vila Mariana', displayName: 'Rua Pelotas, Vila Mariana, SP' },
+  { keywords: ['vila mariana', 'ana rosa'], lat: -23.5890, lng: -46.6380, neighborhood: 'Vila Mariana', displayName: 'Vila Mariana, São Paulo - SP' },
+
+  // Itaim Bibi
+  { keywords: ['clodomiro', 'clodomiro amazonas'], lat: -23.5850, lng: -46.6750, neighborhood: 'Itaim Bibi', displayName: 'Rua Clodomiro Amazonas, Itaim Bibi, São Paulo - SP' },
+  { keywords: ['pedroso alvarenga'], lat: -23.5830, lng: -46.6770, neighborhood: 'Itaim Bibi', displayName: 'Rua Pedroso Alvarenga, Itaim Bibi, São Paulo - SP' },
+  { keywords: ['joaquim floriano'], lat: -23.5840, lng: -46.6730, neighborhood: 'Itaim Bibi', displayName: 'Rua Joaquim Floriano, Itaim Bibi, São Paulo - SP' },
+  { keywords: ['tabapuã', 'tabapua'], lat: -23.5860, lng: -46.6760, neighborhood: 'Itaim Bibi', displayName: 'Rua Tabapuã, Itaim Bibi, São Paulo - SP' },
+  { keywords: ['manuel guedes'], lat: -23.5875, lng: -46.6745, neighborhood: 'Itaim Bibi', displayName: 'Rua Manuel Guedes, Itaim Bibi, SP' },
+  { keywords: ['itaim', 'itaim bibi'], lat: -23.5850, lng: -46.6750, neighborhood: 'Itaim Bibi', displayName: 'Itaim Bibi, São Paulo - SP' },
+
+  // Santo Amaro / Chácara Santo Antônio
+  { keywords: ['adolfo pinheiro'], lat: -23.6520, lng: -46.7040, neighborhood: 'Santo Amaro', displayName: 'Av. Adolfo Pinheiro, Santo Amaro, SP' },
+  { keywords: ['alexandre dumas'], lat: -23.6260, lng: -46.7020, neighborhood: 'Chácara Santo Antônio', displayName: 'Rua Alexandre Dumas, Chácara Santo Antônio, SP' },
+  { keywords: ['amador bueno'], lat: -23.6540, lng: -46.7060, neighborhood: 'Santo Amaro', displayName: 'Rua Amador Bueno, Santo Amaro, SP' },
+  { keywords: ['santo amaro'], lat: -23.6260, lng: -46.7020, neighborhood: 'Santo Amaro', displayName: 'Santo Amaro, São Paulo - SP' },
+
+  // Vila Nova Conceição
+  { keywords: ['cidade de milão', 'praça cidade de milão'], lat: -23.5930, lng: -46.6670, neighborhood: 'Vila Nova Conceição', displayName: 'Praça Cidade de Milão, Vila Nova Conceição, SP' },
+  { keywords: ['diogo jácome', 'diogo jacome'], lat: -23.5945, lng: -46.6690, neighborhood: 'Vila Nova Conceição', displayName: 'Rua Diogo Jácome, Vila Nova Conceição, SP' },
+  { keywords: ['lourenço de almeida'], lat: -23.5920, lng: -46.6650, neighborhood: 'Vila Nova Conceição', displayName: 'Rua Lourenço de Almeida, Vila Nova Conceição, SP' },
+  { keywords: ['afonso braz'], lat: -23.5960, lng: -46.6680, neighborhood: 'Vila Nova Conceição', displayName: 'Rua Afonso Braz, Vila Nova Conceição, SP' },
+  { keywords: ['vila nova conceição', 'vila nova conceicao'], lat: -23.5930, lng: -46.6670, neighborhood: 'Vila Nova Conceição', displayName: 'Vila Nova Conceição, SP' }
 ];
 
 /**
- * Geocodifica um endereço em texto para coordenadas (latitude, longitude) usando OpenStreetMap Nominatim + Dicionário Local
+ * Geocodifica um endereço em texto para coordenadas exatas da Zona Sul de SP
  */
 export async function geocodeAddress(addressText) {
-  const queryLower = addressText.toLowerCase();
+  const queryLower = addressText.toLowerCase().trim();
 
-  try {
-    const fullQuery = `${addressText}, São Paulo, SP, Brasil`;
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullQuery)}&format=json&limit=1`);
-    const data = await response.json();
-
-    if (data && data.length > 0 && data[0].lat && data[0].lon) {
-      return {
-        lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon),
-        displayName: data[0].display_name
-      };
-    }
-  } catch (err) {
-    console.warn("Aviso ao geocodificar via Nominatim, usando base local:", err);
-  }
-
-  // Dicionário de Coordenadas da Zona Sul de SP
-  const matched = ZONA_SUL_KNOWN_LOCATIONS.find(loc => 
-    loc.keywords.some(kw => queryLower.includes(kw))
+  // 1. Tentar casamento estrito/semântico no Banco de Vias da Zona Sul (maior precisão)
+  const matched = ZONA_SUL_STREET_DATABASE.find(item => 
+    item.keywords.some(kw => queryLower.includes(kw))
   );
 
   if (matched) {
+    // Extração de número para micro-deslocamento determinístico ao longo da via
+    const numberMatch = addressText.match(/\b\d+\b/);
+    let latOffset = 0;
+    let lngOffset = 0;
+
+    if (numberMatch) {
+      const num = parseInt(numberMatch[0], 10);
+      if (num > 0) {
+        latOffset = ((num % 100) / 100 - 0.5) * 0.0015;
+        lngOffset = (((num * 3) % 100) / 100 - 0.5) * 0.0015;
+      }
+    }
+
     return {
-      lat: matched.lat,
-      lng: matched.lng,
-      displayName: matched.displayName
+      lat: matched.lat + latOffset,
+      lng: matched.lng + lngOffset,
+      displayName: matched.displayName,
+      neighborhood: matched.neighborhood
     };
   }
 
-  // Fallback padrão para o centro do Brooklin / Berrini
+  // 2. Se não encontrou no banco local, consultar Nominatim com restrição estrita do Bounding Box Zona Sul SP
+  try {
+    const fullQuery = `${addressText}, São Paulo, SP, Brasil`;
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullQuery)}&format=json&limit=1`,
+      { headers: { 'User-Agent': 'ImoveisZonaSulApp/1.0' } }
+    );
+    const data = await response.json();
+
+    if (data && data.length > 0 && data[0].lat && data[0].lon) {
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+
+      // Validação do Bounding Box da Zona Sul/Centro-Sul de SP (-23.72 <= lat <= -23.54 e -46.78 <= lng <= -46.55)
+      if (lat >= -23.72 && lat <= -23.54 && lng >= -46.78 && lng <= -46.55) {
+        return {
+          lat: lat,
+          lng: lng,
+          displayName: data[0].display_name
+        };
+      } else {
+        console.warn("Resultado Nominatim fora do bounding box da Zona Sul SP (rejeitado):", data[0]);
+      }
+    }
+  } catch (err) {
+    console.warn("Aviso ao consultar Nominatim:", err);
+  }
+
+  // 3. Fallback Padrão Zona Sul (Brooklin)
   return {
     lat: -23.6080,
     lng: -46.6940,
-    displayName: `${addressText}, Zona Sul, São Paulo - SP`
+    displayName: `${addressText}, Zona Sul, São Paulo - SP`,
+    neighborhood: "Brooklin"
   };
 }
 

@@ -78,13 +78,24 @@ export default function App() {
     // Extrair o nome do bairro do endereço procurado para titulação adequada
     let detectedBairro = "Brooklin";
     const textLower = (searchInfo.addressText + " " + (searchInfo.displayName || "")).toLowerCase();
-    if (textLower.includes("moema")) detectedBairro = "Moema";
-    else if (textLower.includes("morumbi")) detectedBairro = "Morumbi";
-    else if (textLower.includes("campo belo")) detectedBairro = "Campo Belo";
-    else if (textLower.includes("vila mariana")) detectedBairro = "Vila Mariana";
-    else if (textLower.includes("itaim")) detectedBairro = "Itaim Bibi";
-    else if (textLower.includes("santo amaro")) detectedBairro = "Santo Amaro";
-    else if (textLower.includes("vila nova concei")) detectedBairro = "Vila Nova Conceição";
+    
+    if (searchInfo.neighborhood) {
+      detectedBairro = searchInfo.neighborhood;
+    } else if (textLower.includes("moema") || textLower.includes("maracatins") || textLower.includes("jauaperi")) {
+      detectedBairro = "Moema";
+    } else if (textLower.includes("morumbi") || textLower.includes("villares") || textLower.includes("hastimphilo") || textLower.includes("gronchi") || textLower.includes("laércio") || textLower.includes("oscar americano")) {
+      detectedBairro = "Portal do Morumbi";
+    } else if (textLower.includes("campo belo") || textLower.includes("pascal") || textLower.includes("vieira de morais")) {
+      detectedBairro = "Campo Belo";
+    } else if (textLower.includes("vila mariana") || textLower.includes("vergueiro") || textLower.includes("domingos de morais")) {
+      detectedBairro = "Vila Mariana";
+    } else if (textLower.includes("itaim") || textLower.includes("clodomiro") || textLower.includes("joaquim floriano") || textLower.includes("pedroso alvarenga")) {
+      detectedBairro = "Itaim Bibi";
+    } else if (textLower.includes("santo amaro") || textLower.includes("alexandre dumas") || textLower.includes("adolfo pinheiro")) {
+      detectedBairro = "Santo Amaro";
+    } else if (textLower.includes("vila nova concei") || textLower.includes("milão")) {
+      detectedBairro = "Vila Nova Conceição";
+    }
 
     // Gerar ofertas dos portais no raio exato
     const qaResults = generateQuintoAndarListingsInRadius(
