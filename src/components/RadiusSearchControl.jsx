@@ -4,6 +4,8 @@ import { geocodeAddress } from '../services/quintoAndarService';
 
 // Base de sugestões de endereços populares e de alta demanda na Zona Sul de SP
 const POPULAR_ZONA_SUL_ADDRESSES = [
+  { text: 'Rua Guilherme Dumont Villares, 1200', bairro: 'Portal do Morumbi', desc: 'Portal do Morumbi / Vila Andrade, São Paulo - SP' },
+  { text: 'Rua Guilherme Dumont Villares, 500', bairro: 'Morumbi', desc: 'Vila Andrade, São Paulo - SP' },
   { text: 'Rua Padre Antônio José dos Santos, 500', bairro: 'Brooklin', desc: 'Brooklin Novo, São Paulo - SP' },
   { text: 'Av. Engenheiro Luís Carlos Berrini, 1050', bairro: 'Brooklin', desc: 'Polo Comercial Berrini, SP' },
   { text: 'Rua Florida, 880', bairro: 'Brooklin', desc: 'Próximo à Berrini, SP' },

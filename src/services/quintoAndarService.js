@@ -4,9 +4,10 @@
  * Geocodifica um endereço em texto para coordenadas (latitude, longitude) usando OpenStreetMap Nominatim
  */
 const ZONA_SUL_KNOWN_LOCATIONS = [
+  { keywords: ['guilherme', 'dumont', 'dummont', 'villares', 'villar'], lat: -23.6185, lng: -46.7310, displayName: 'Rua Guilherme Dumont Villares, Morumbi, São Paulo - SP' },
   { keywords: ['padre antônio', 'berrini', 'brooklin'], lat: -23.6080, lng: -46.6940, displayName: 'Brooklin, São Paulo - SP' },
   { keywords: ['moema', 'maracatins', 'jauaperi', 'ibira'], lat: -23.6035, lng: -46.6612, displayName: 'Moema, São Paulo - SP' },
-  { keywords: ['morumbi', 'oscar americano', 'panamby'], lat: -23.6120, lng: -46.7210, displayName: 'Morumbi, São Paulo - SP' },
+  { keywords: ['morumbi', 'oscar americano', 'panamby', 'hastimphilo'], lat: -23.6180, lng: -46.7250, displayName: 'Portal do Morumbi, São Paulo - SP' },
   { keywords: ['campo belo', 'pascal', 'vieira de morais'], lat: -23.6180, lng: -46.6710, displayName: 'Campo Belo, São Paulo - SP' },
   { keywords: ['vergueiro', 'vila mariana', 'domingos de morais', 'ana rosa'], lat: -23.5890, lng: -46.6380, displayName: 'Vila Mariana, São Paulo - SP' },
   { keywords: ['itaim', 'clodomiro', 'joaquim floriano', 'pedroso alvarenga'], lat: -23.5850, lng: -46.6750, displayName: 'Itaim Bibi, São Paulo - SP' },
