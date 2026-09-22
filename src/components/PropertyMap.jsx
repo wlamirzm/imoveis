@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { calculateHaversineDistanceMeters } from '../services/quintoAndarService';
+import { exportPropertiesToExcel } from '../utils/excelExporter';
 import { 
   Building2, 
   MapPin, 
@@ -13,7 +14,8 @@ import {
   ArrowUpRight,
   Sparkles,
   Layers,
-  Target
+  Target,
+  Download
 } from 'lucide-react';
 
 // Tile Layers 100% Livres & Gratuitos para Leaflet / OpenStreetMap
@@ -143,7 +145,7 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
       
       {/* Coluna Esquerda: Lista Interativa de Imóveis Mapeados */}
       <div className="lg:col-span-4 flex flex-col bg-[#131F2E] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-        <div className="p-4 border-b border-slate-800 bg-[#0D1826] flex items-center justify-between">
+        <div className="p-4 border-b border-slate-800 bg-[#0D1826] flex items-center justify-between gap-2">
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Building2 className="w-4 h-4 text-remax-red" />
@@ -153,9 +155,20 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
               {displayProperties.length} imóveis estritamente dentro do raio {activeRadiusSearch ? `de ${activeRadiusSearch.radiusMeters}m` : ''}
             </p>
           </div>
-          <span className="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-mono">
-            {displayProperties.filter(p => p.portal === 'QuintoAndar').length} QuintoAndar
-          </span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => exportPropertiesToExcel(displayProperties, activeRadiusSearch?.addressText, activeRadiusSearch?.radiusMeters)}
+              disabled={displayProperties.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+              title="Exportar imóveis no perímetro para planilha Excel (.csv/.xls)"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Exportar Excel</span>
+            </button>
+            <span className="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-mono hidden sm:inline-block">
+              {displayProperties.filter(p => p.portal === 'QuintoAndar').length} QuintoAndar
+            </span>
+          </div>
         </div>
 
         {/* Scrollable Property Cards */}

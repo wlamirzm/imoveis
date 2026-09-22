@@ -9,6 +9,8 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
+import { Download } from 'lucide-react';
+import { exportITBIToExcel } from '../utils/excelExporter';
 
 export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel = '1 km', onTimeframeChange }) {
   const [selectedTimeframe, setSelectedTimeframe] = useState(24); // 24 Meses default
@@ -50,8 +52,18 @@ export function ITBIAnalyticsPanel({ metrics, itbiList = [], selectedRadiusLabel
           </p>
         </div>
 
-        {/* Seletor de Janela Temporal (12m vs 24m) & Margem */}
+        {/* Seletor de Janela Temporal (12m vs 24m) & Exportação */}
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+          <button
+            onClick={() => exportITBIToExcel(itbiList, selectedRadiusLabel)}
+            disabled={!itbiList || itbiList.length === 0}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            title="Exportar registros de ITBI (Vendas Concretizadas) para Excel"
+          >
+            <Download className="w-4 h-4" />
+            <span>Exportar Transações ITBI</span>
+          </button>
+
           <div className="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
             <button
               onClick={() => handleTimeframeClick(12)}
