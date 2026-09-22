@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { calculateHaversineDistanceMeters } from '../services/quintoAndarService';
 import { 
   Building2, 
   MapPin, 
@@ -87,10 +88,46 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
 
   const currentTileStyle = MAP_STYLES[selectedStyleKey];
 
+  // Filtragem estrita dos imóveis que estão rigorosamente DENTRO do raio selecionado
+  const displayProperties = useMemo(() => {
+    if (!activeRadiusSearch) return properties;
+
+    return properties
+      .map(prop => {
+        const dist = calculateHaversineDistanceMeters(
+          activeRadiusSearch.centerLat,
+          activeRadiusSearch.centerLng,
+          prop.lat,
+          prop.lng
+        );
+        return { ...prop, distanciaDoAlvoM: dist };
+      })
+      .filter(prop => prop.distanciaDoAlvoM <= activeRadiusSearch.radiusMeters)
+      .sort((a, b) => a.distanciaDoAlvoM - b.distanciaDoAlvoM);
+  }, [properties, activeRadiusSearch]);
+
+  // Filtragem estrita dos registros de ITBI que estão rigorosamente DENTRO do raio selecionado
+  const filteredItbiList = useMemo(() => {
+    if (!activeRadiusSearch) return itbiList;
+
+    return itbiList
+      .map(itbi => {
+        const dist = calculateHaversineDistanceMeters(
+          activeRadiusSearch.centerLat,
+          activeRadiusSearch.centerLng,
+          itbi.lat,
+          itbi.lng
+        );
+        return { ...itbi, distanciaM: dist };
+      })
+      .filter(itbi => itbi.distanciaM <= activeRadiusSearch.radiusMeters)
+      .sort((a, b) => a.distanciaM - b.distanciaM);
+  }, [itbiList, activeRadiusSearch]);
+
   // Determinar centro do mapa baseado na busca por raio ou no primeiro imóvel
   const defaultCenter = activeRadiusSearch
     ? [activeRadiusSearch.centerLat, activeRadiusSearch.centerLng]
-    : (properties.length > 0 ? [properties[0].lat, properties[0].lng] : [-23.6080, -46.6940]);
+    : (displayProperties.length > 0 ? [displayProperties[0].lat, displayProperties[0].lng] : [-23.6080, -46.6940]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-210px)] min-h-[600px]">
@@ -101,26 +138,26 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Building2 className="w-4 h-4 text-remax-red" />
-              Imóveis no Perímetro {activeRadiusSearch ? `(${activeRadiusSearch.radiusMeters}m)` : ''}
+              Imóveis no Perímetro {activeRadiusSearch ? `(${activeRadiusSearch.radiusMeters >= 1000 ? `${activeRadiusSearch.radiusMeters / 1000}km` : `${activeRadiusSearch.radiusMeters}m`})` : ''}
             </h3>
             <p className="text-xs text-slate-400">
-              {properties.length} imóveis encontrados {selectedBairro !== 'Todos os Bairros (Zona Sul)' ? `em ${selectedBairro}` : ''}
+              {displayProperties.length} imóveis estritamente dentro do raio {activeRadiusSearch ? `de ${activeRadiusSearch.radiusMeters}m` : ''}
             </p>
           </div>
           <span className="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-mono">
-            {properties.filter(p => p.portal === 'QuintoAndar').length} QuintoAndar
+            {displayProperties.filter(p => p.portal === 'QuintoAndar').length} QuintoAndar
           </span>
         </div>
 
         {/* Scrollable Property Cards */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          {properties.length === 0 ? (
+          {displayProperties.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
               <MapPin className="w-10 h-10 mx-auto text-slate-600 mb-2" />
-              <p className="text-sm">Nenhum imóvel encontrado no raio selecionado.</p>
+              <p className="text-sm">Nenhum imóvel encontrado dentro do perímetro selecionado.</p>
             </div>
           ) : (
-            properties.map((prop) => (
+            displayProperties.map((prop) => (
               <div
                 key={prop.id}
                 onClick={() => setActiveProperty(prop)}
@@ -309,7 +346,7 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
             )}
 
             {/* Marcadores das Transações de ITBI da PMSP */}
-            {showITBILayer && itbiList.map((itbi) => (
+            {showITBILayer && filteredItbiList.map((itbi) => (
               <Marker
                 key={itbi.id}
                 position={[itbi.lat, itbi.lng]}
@@ -355,7 +392,7 @@ export default function PropertyMap({ properties, onSelectForCma, selectedBairro
               </Marker>
             ))}
 
-            {properties.map((prop) => (
+            {displayProperties.map((prop) => (
               <Marker
                 key={prop.id}
                 position={[prop.lat, prop.lng]}
